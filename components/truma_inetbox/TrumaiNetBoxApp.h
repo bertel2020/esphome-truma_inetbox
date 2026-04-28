@@ -1,5 +1,6 @@
 #pragma once
 
+#include "esphome/core/component.h"
 #include "LinBusProtocol.h"
 #include "TrumaStructs.h"
 #include "TrumaiNetBoxAppAirconAuto.h"
@@ -15,6 +16,8 @@
 
 namespace esphome {
 namespace truma_inetbox {
+
+class TrumaiNetBoxApp; // Forward Declaration
 
 #define LIN_PID_TRUMA_INET_BOX 0x18
 
@@ -45,13 +48,11 @@ class TrumaiNetBoxApp : public LinBusProtocol {
 #endif  // USE_TIME
 
  protected:
-  // Truma CP Plus needs init (reset). This device is not registered.
   uint32_t device_registered_ = 0;
   uint32_t init_requested_ = 0;
   uint32_t init_recieved_ = 0;
   uint8_t message_counter = 1;
 
-  // Truma heater conected to CP Plus.
   TRUMA_COMPANY company_ = TRUMA_COMPANY::TRUMA;
   TRUMA_DEVICE heater_device_ = TRUMA_DEVICE::UNKNOWN;
   TRUMA_DEVICE aircon_device_ = TRUMA_DEVICE::UNKNOWN;
@@ -63,22 +64,17 @@ class TrumaiNetBoxApp : public LinBusProtocol {
   TrumaiNetBoxAppHeater heater_;
   TrumaiNetBoxAppTimer timer_;
 
-  // last time CP plus was informed I got an update msg.
   uint32_t update_time_ = 0;
 
 #ifdef USE_TIME
   time::RealTimeClock *time_ = nullptr;
-
-  // Mark if the initial clock sync was done.
   bool update_status_clock_done = false;
 #endif  // USE_TIME
 
   bool answer_lin_order_(const uint8_t pid) override;
-
   bool lin_read_field_by_identifier_(uint8_t identifier, std::array<uint8_t, 5> *response) override;
   const uint8_t *lin_multiframe_recieved(const uint8_t *message, const uint8_t message_len,
                                           uint8_t *return_len) override;
-
   bool has_update_to_submit_();
 };
 
