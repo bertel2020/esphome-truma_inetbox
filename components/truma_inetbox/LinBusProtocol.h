@@ -16,8 +16,7 @@ class LinBusProtocol : public LinBusListener {
   const std::array<uint8_t, 8> lin_empty_response_ = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
   bool answer_lin_order_(const uint8_t pid) override;
-  // Marked virtual so subclasses (TrumaiNetBoxApp) can intercept specific PIDs
-  // before the base class handles the diagnostic frames (0x3C).
+  // virtual erlaubt Override in TrumaiNetBoxApp für PID 0x22 (CP Plus Display Status)
   virtual void lin_message_recieved_(const uint8_t pid, const uint8_t *message, uint8_t length) override;
 
   virtual bool lin_read_field_by_identifier_(uint8_t identifier, std::array<uint8_t, 5> *response) = 0;
@@ -27,7 +26,7 @@ class LinBusProtocol : public LinBusListener {
   std::queue<std::array<uint8_t, 8>> updates_to_send_ = {};
 
  private:
-  uint8_t lin_node_address_ = /*LIN initial node address*/ 0x03;
+  uint8_t lin_node_address_ = 0x03;
 
   void prepare_update_msg_(const std::array<uint8_t, 8> message) { this->updates_to_send_.push(std::move(message)); }
   bool is_matching_identifier_(const uint8_t *message);
