@@ -18,12 +18,10 @@
 namespace esphome {
 namespace truma_inetbox {
 
-class TrumaiNetBoxApp; // Forward Declaration
+class TrumaiNetBoxApp;
 
-#define LIN_PID_TRUMA_INET_BOX 0x18
-
-// PID 0x22: CP Plus display status (voltage, cp_plus_display, heating_status)
-#define LIN_PID_CP_PLUS_STATUS_2 0x22
+#define LIN_PID_TRUMA_INET_BOX  0x18
+#define LIN_PID_CP_PLUS_STATUS_2 0x22  // CP Plus Display + Heating Status
 
 class TrumaiNetBoxApp : public LinBusProtocol {
  public:
@@ -37,13 +35,13 @@ class TrumaiNetBoxApp : public LinBusProtocol {
   TRUMA_DEVICE get_heater_device() const { return this->heater_device_; }
   TRUMA_DEVICE get_aircon_device() const { return this->aircon_device_; }
 
-  TrumaiNetBoxAppAirconAuto *get_aircon_auto() { return &this->airconAuto_; }
-  TrumaiNetBoxAppAirconManual *get_aircon_manual() { return &this->airconManual_; }
-  TrumaiNetBoxAppClock *get_clock() { return &this->clock_; }
-  TrumaiNetBoxAppConfig *get_config() { return &this->config_; }
-  TrumaiNetBoxAppDisplay *get_display() { return &this->display_; }
-  TrumaiNetBoxAppHeater *get_heater() { return &this->heater_; }
-  TrumaiNetBoxAppTimer *get_timer() { return &this->timer_; }
+  TrumaiNetBoxAppAirconAuto    *get_aircon_auto()    { return &this->airconAuto_; }
+  TrumaiNetBoxAppAirconManual  *get_aircon_manual()  { return &this->airconManual_; }
+  TrumaiNetBoxAppClock         *get_clock()          { return &this->clock_; }
+  TrumaiNetBoxAppConfig        *get_config()         { return &this->config_; }
+  TrumaiNetBoxAppDisplay       *get_display()        { return &this->display_; }
+  TrumaiNetBoxAppHeater        *get_heater()         { return &this->heater_; }
+  TrumaiNetBoxAppTimer         *get_timer()          { return &this->timer_; }
 
   int64_t get_last_cp_plus_request() { return this->device_registered_; }
 
@@ -54,21 +52,21 @@ class TrumaiNetBoxApp : public LinBusProtocol {
 
  protected:
   uint32_t device_registered_ = 0;
-  uint32_t init_requested_ = 0;
-  uint32_t init_recieved_ = 0;
-  uint8_t message_counter = 1;
+  uint32_t init_requested_    = 0;
+  uint32_t init_recieved_     = 0;
+  uint8_t  message_counter    = 1;
 
-  TRUMA_COMPANY company_ = TRUMA_COMPANY::TRUMA;
-  TRUMA_DEVICE heater_device_ = TRUMA_DEVICE::UNKNOWN;
-  TRUMA_DEVICE aircon_device_ = TRUMA_DEVICE::UNKNOWN;
+  TRUMA_COMPANY company_      = TRUMA_COMPANY::TRUMA;
+  TRUMA_DEVICE  heater_device_ = TRUMA_DEVICE::UNKNOWN;
+  TRUMA_DEVICE  aircon_device_ = TRUMA_DEVICE::UNKNOWN;
 
-  TrumaiNetBoxAppAirconAuto airconAuto_;
+  TrumaiNetBoxAppAirconAuto   airconAuto_;
   TrumaiNetBoxAppAirconManual airconManual_;
-  TrumaiNetBoxAppClock clock_;
-  TrumaiNetBoxAppConfig config_;
-  TrumaiNetBoxAppDisplay display_;
-  TrumaiNetBoxAppHeater heater_;
-  TrumaiNetBoxAppTimer timer_;
+  TrumaiNetBoxAppClock        clock_;
+  TrumaiNetBoxAppConfig       config_;
+  TrumaiNetBoxAppDisplay      display_;
+  TrumaiNetBoxAppHeater       heater_;
+  TrumaiNetBoxAppTimer        timer_;
 
   uint32_t update_time_ = 0;
 
@@ -81,6 +79,7 @@ class TrumaiNetBoxApp : public LinBusProtocol {
   bool lin_read_field_by_identifier_(uint8_t identifier, std::array<uint8_t, 5> *response) override;
   const uint8_t *lin_multiframe_recieved(const uint8_t *message, const uint8_t message_len,
                                           uint8_t *return_len) override;
+  // Überschreibt LinBusProtocol::lin_message_recieved_ um PID 0x22 abzufangen
   void lin_message_recieved_(const uint8_t pid, const uint8_t *message, uint8_t length) override;
   bool has_update_to_submit_();
 };
