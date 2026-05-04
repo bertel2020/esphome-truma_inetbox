@@ -13,17 +13,12 @@ TrumaiNetBoxApp::TrumaiNetBoxApp() {
   this->airconAuto_.set_parent(this);
   this->airconManual_.set_parent(this);
   this->clock_.set_parent(this);
-  // this->config_.set_parent(this);
   this->display_.set_parent(this);
   this->heater_.set_parent(this);
   this->timer_.set_parent(this);
 }
 
 void TrumaiNetBoxApp::update() {
-  // Call listeners in after method 'lin_multiframe_recieved' call.
-  // Because 'lin_multiframe_recieved' is time critical an all these sensors can take some time.
-
-  // Run through callbacks
   this->airconAuto_.update();
   this->airconManual_.update();
   this->clock_.update();
@@ -35,12 +30,8 @@ void TrumaiNetBoxApp::update() {
   LinBusProtocol::update();
 
 #ifdef USE_TIME
-  // Update time of CP Plus automatically when
-  // - Time component configured
-  // - Update was not done
-  // - 30 seconds after init data recieved
   if (this->time_ != nullptr && !this->update_status_clock_done && this->init_recieved_ > 0) {
-    if (micros() > ((30 * 1000 * 1000) + this->init_recieved_ /* 30 seconds after init recieved */)) {
+    if (micros() > ((30 * 1000 * 1000) + this->init_recieved_)) {
       this->update_status_clock_done = true;
       this->clock_.action_write_time();
     }
@@ -49,7 +40,7 @@ void TrumaiNetBoxApp::update() {
 }
 
 const std::array<uint8_t, 4> TrumaiNetBoxApp::lin_identifier() {
-  return {0x17 /*Supplied Id*/, 0x46 /*Supplied Id*/, 0x00 /*Function Id*/, 0x1F /*Function Id*/};
+  return {0x17, 0x46, 0x00, 0x1F};
 }
 
 void TrumaiNetBoxApp::lin_heartbeat() { this->device_registered_ = micros(); }
@@ -71,25 +62,20 @@ void TrumaiNetBoxApp::lin_reset_device() {
 }
 
 void TrumaiNetBoxApp::lin_message_recieved_(const uint8_t pid, const uint8_t *message, uint8_t length) {
-  // PID 0x22: CP Plus display status frame
-  // databytes[0] = voltage * 10
-  // databytes[1] = cp_plus_display_status  (CP_PLUS_DISPLAY_STATUS_MAPPING)
-  // databytes[2] = heating_status          (HEATING_STATUS_MAPPING)
-  // databytes[3] = heating_status_2        (HEATING_STATUS_2_MAPPING)
+  // PID 0x22: CP Plus Display Status + Heating Status
+  // Quelle: danielfett/inetbox.py parse_status_2
+  // databytes[0] = Spannung, [1] = cp_plus_display, [2] = heating_status, [3] = heating_status_2
   if (pid == LIN_PID_CP_PLUS_STATUS_2) {
     this->display_.set_display_status(message, length);
     return;
   }
-
-  // Pass all other PIDs to base class handler
+  // Alle anderen PIDs an Basisklasse weiterleiten (behandelt 0x3C Diagnose-Frames)
   LinBusProtocol::lin_message_recieved_(pid, message, length);
 }
 
 bool TrumaiNetBoxApp::answer_lin_order_(const uint8_t pid) {
-  // Alive message
   if (pid == LIN_PID_TRUMA_INET_BOX) {
     std::array<uint8_t, 8> response = this->lin_empty_response_;
-
     if (this->updates_to_send_.empty() && !this->has_update_to_submit_()) {
       response[0] = 0xFE;
     }
@@ -100,21 +86,21 @@ bool TrumaiNetBoxApp::answer_lin_order_(const uint8_t pid) {
 }
 
 bool TrumaiNetBoxApp::lin_read_field_by_identifier_(uint8_t identifier, std::array<uint8_t, 5> *response) {
-  if (identifier == 0x00 /* LIN Product Identification */) {
+  if (identifier == 0x00) {
     auto lin_identifier = this->lin_identifier();
     (*response)[0] = lin_identifier[0];
     (*response)[1] = lin_identifier[1];
     (*response)[2] = lin_identifier[2];
     (*response)[3] = lin_identifier[3];
-    (*response)[4] = 0x01;  // Variant
+    (*response)[4] = 0x01;
     return true;
-  } else if (identifier == 0x20 /* Product details to display in CP plus */) {
+  } else if (identifier == 0x20) {
     auto lin_identifier = this->lin_identifier();
     (*response)[0] = lin_identifier[0];
     (*response)[1] = lin_identifier[1];
     (*response)[2] = lin_identifier[2];
     return true;
-  } else if (identifier == 0x22 /* unknown usage */) {
+  } else if (identifier == 0x22) {
     return true;
   }
   return false;
@@ -123,13 +109,10 @@ bool TrumaiNetBoxApp::lin_read_field_by_identifier_(uint8_t identifier, std::arr
 const uint8_t *TrumaiNetBoxApp::lin_multiframe_recieved(const uint8_t *message, const uint8_t message_len,
                                                          uint8_t *return_len) {
   static uint8_t response[48] = {};
-  if (message_len < truma_message_header.size()) {
-    return nullptr;
-  }
+  if (message_len < truma_message_header.size()) return nullptr;
+
   for (uint8_t i = 1; i < truma_message_header.size() - 3; i++) {
-    if (message[i] != truma_message_header[i] && message[i] != alde_message_header[i]) {
-      return nullptr;
-    }
+    if (message[i] != truma_message_header[i] && message[i] != alde_message_header[i]) return nullptr;
   }
   if (message[4] != (uint8_t) this->company_) {
     ESP_LOGI(TAG, "Switch company to 0x%02x", message[4]);
@@ -168,9 +151,7 @@ const uint8_t *TrumaiNetBoxApp::lin_multiframe_recieved(const uint8_t *message, 
     }
   }
 
-  if (message_len < sizeof(StatusFrame) && message[0] == LIN_SID_FIll_STATE_BUFFFER) {
-    return nullptr;
-  }
+  if (message_len < sizeof(StatusFrame) && message[0] == LIN_SID_FIll_STATE_BUFFFER) return nullptr;
 
   auto statusFrame = reinterpret_cast<const StatusFrame *>(message);
   auto header = &statusFrame->genericHeader;
@@ -187,19 +168,15 @@ const uint8_t *TrumaiNetBoxApp::lin_multiframe_recieved(const uint8_t *message, 
   if (header->message_type == STATUS_FRAME_HEATER && header->message_length == sizeof(StatusFrameHeater)) {
     this->heater_.set_status(statusFrame->heater);
     return response;
-  } else if (header->message_type == STATUS_FRAME_AIRCON_MANUAL &&
-             header->message_length == sizeof(StatusFrameAirconManual)) {
+  } else if (header->message_type == STATUS_FRAME_AIRCON_MANUAL && header->message_length == sizeof(StatusFrameAirconManual)) {
     this->airconManual_.set_status(statusFrame->airconManual);
     return response;
-  } else if (header->message_type == STATUS_FRAME_AIRCON_MANUAL_INIT &&
-             header->message_length == sizeof(StatusFrameAirconManualInit)) {
+  } else if (header->message_type == STATUS_FRAME_AIRCON_MANUAL_INIT && header->message_length == sizeof(StatusFrameAirconManualInit)) {
     return response;
-  } else if (header->message_type == STATUS_FRAME_AIRCON_AUTO &&
-             header->message_length == sizeof(StatusFrameAirconAuto)) {
+  } else if (header->message_type == STATUS_FRAME_AIRCON_AUTO && header->message_length == sizeof(StatusFrameAirconAuto)) {
     this->airconAuto_.set_status(statusFrame->airconAuto);
     return response;
-  } else if (header->message_type == STATUS_FRAME_AIRCON_AUTO_INIT &&
-             header->message_length == sizeof(StatusFrameAirconAutoInit)) {
+  } else if (header->message_type == STATUS_FRAME_AIRCON_AUTO_INIT && header->message_length == sizeof(StatusFrameAirconAutoInit)) {
     return response;
   } else if (header->message_type == STATUS_FRAME_TIMER && header->message_length == sizeof(StatusFrameTimer)) {
     this->timer_.set_status(statusFrame->timer);
@@ -210,29 +187,19 @@ const uint8_t *TrumaiNetBoxApp::lin_multiframe_recieved(const uint8_t *message, 
   } else if (header->message_type == STAUTS_FRAME_CONFIG && header->message_length == sizeof(StatusFrameConfig)) {
     this->config_.set_status(statusFrame->config);
     return response;
-  } else if (header->message_type == STATUS_FRAME_RESPONSE_ACK &&
-             header->message_length == sizeof(StatusFrameResponseAck)) {
+  } else if (header->message_type == STATUS_FRAME_RESPONSE_ACK && header->message_length == sizeof(StatusFrameResponseAck)) {
     auto data = statusFrame->responseAck;
-    if (data.error_code != ResponseAckResult::RESPONSE_ACK_RESULT_OKAY) {
-      this->lin_reset_device();
-    }
+    if (data.error_code != ResponseAckResult::RESPONSE_ACK_RESULT_OKAY) this->lin_reset_device();
     return response;
   } else if (header->message_type == STATUS_FRAME_DEVICES && header->message_length == sizeof(StatusFrameDevice)) {
     auto device = statusFrame->device;
     ESP_LOGD(TAG, "Device detected: ID %d", device.device_id);
-
     const auto truma_device = static_cast<TRUMA_DEVICE>(device.software_revision[0]);
     const auto is_CPPLUSDevice = device.device_id == 0;
-
     if (!is_CPPLUSDevice) {
-      if (device.device_id == 1) {
-        this->heater_device_ = truma_device;
-      }
-      if (device.device_id == 2) {
-        this->aircon_device_ = TRUMA_DEVICE::AIRCON_DEVICE;
-      }
+      if (device.device_id == 1) this->heater_device_ = truma_device;
+      if (device.device_id == 2) this->aircon_device_ = TRUMA_DEVICE::AIRCON_DEVICE;
     }
-
     if (device.device_count == 2 && this->heater_device_ != TRUMA_DEVICE::UNKNOWN) {
       this->init_recieved_ = micros();
     } else if (device.device_count == 3 && this->heater_device_ != TRUMA_DEVICE::UNKNOWN &&
