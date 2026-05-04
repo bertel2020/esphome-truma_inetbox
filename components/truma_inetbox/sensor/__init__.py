@@ -112,7 +112,20 @@ CONF_SUPPORTED_TYPE = {
         CONF_ACCURACY_DECIMALS: 0,
         CONF_DEVICE_CLASS: DEVICE_CLASS_TEMPERATURE,
     },
+    "CLOCK_HOUR": {
+        CONF_CLASS: TRUMA_SENSOR_TYPE_dummy_ns.CLOCK_HOUR,
+        CONF_UNIT_OF_MEASUREMENT: UNIT_EMPTY,
+        CONF_ICON: "mdi:clock-outline",
+        CONF_ACCURACY_DECIMALS: 0,
+    },
+    "CLOCK_MINUTE": {
+        CONF_CLASS: TRUMA_SENSOR_TYPE_dummy_ns.CLOCK_MINUTE,
+        CONF_UNIT_OF_MEASUREMENT: UNIT_EMPTY,
+        CONF_ICON: "mdi:clock-outline",
+        CONF_ACCURACY_DECIMALS: 0,
+    },
 }
+
 
 def set_default_based_on_type():
     def set_defaults_(config):
@@ -128,6 +141,7 @@ def set_default_based_on_type():
         return config
     return set_defaults_
 
+
 # Geändertes Schema für Kompatibilität mit ESPHome 2025
 CONFIG_SCHEMA = sensor.sensor_schema().extend(
     cv.Schema({
@@ -138,6 +152,7 @@ CONFIG_SCHEMA = sensor.sensor_schema().extend(
 ).extend(cv.COMPONENT_SCHEMA)
 
 FINAL_VALIDATE_SCHEMA = set_default_based_on_type()
+
 
 async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
