@@ -6,20 +6,6 @@
 namespace esphome {
 namespace truma_inetbox {
 
-/* LIN Packet Format:
-    _________ __________ _________ ____________ __________
-   |         |          |         |           |||         |
-   |  Break  |Sync 0x55 |PID byte |Data Bytes |||Checksum |
-   |_________|__________|_________|___________|||_________|
-
-   Every byte has start bit and stop bit and it is send LSB first.
-   Break - 13 bits of dominant state ("0"), followed by 1 bit recesive state ("1")
-   Sync Byte - Byte for Bound rate syncronization, always 0x55
-   ID Byte - consist of parity, length and address; parity is determined by LIN standard and depends from address and
-   message length Data Bytes - user defined; depend on devices on LIN bus Checksum - inverted 256 checksum; data bytes
-   are summed up and then inverted
-*/
-
 static const char *const TAG = "truma_inetbox.LinBusListener";
 
 #define LIN_BREAK 0x00
@@ -54,15 +40,13 @@ void LinBusListener::setup() {
     this->fault_pin_->setup();
   }
 
-  // call device specific function
   this->setup_framework();
 
 #if ESPHOME_LOG_LEVEL > ESPHOME_LOG_LEVEL_NONE
   assert(this->log_queue_ != 0);
-#endif  // ESPHOME_LOG_LEVEL > ESPHOME_LOG_LEVEL_NONE
+#endif
 
   if (this->cs_pin_ != nullptr) {
-    // Enable LIN driver if not in observer mode.
     this->cs_pin_->digital_write(!this->observer_mode_);
   }
 }
@@ -80,7 +64,7 @@ void LinBusListener::loop() {
 
 #if ESPHOME_LOG_LEVEL > ESPHOME_LOG_LEVEL_NONE
   this->process_log_queue(QUEUE_WAIT_DONT_BLOCK);
-#endif  // ESPHOME_LOG_LEVEL > ESPHOME_LOG_LEVEL_NONE
+#endif
 }
 
 void LinBusListener::write_lin_answer_(const uint8_t *data, uint8_t len) {
@@ -99,18 +83,10 @@ void LinBusListener::write_lin_answer_(const uint8_t *data, uint8_t len) {
 
   uint8_t data_CRC = 0;
   if (this->lin_checksum_ == LIN_CHECKSUM::LIN_CHECKSUM_VERSION_1 || this->current_PID_ == DIAGNOSTIC_FRAME_SLAVE) {
-    // LIN checksum V1
     data_CRC = data_checksum(data, len, 0);
   } else {
-    // LIN checksum V2
     data_CRC = data_checksum(data, len, this->current_PID_with_parity_);
   }
-
-  // I am answering too quick ~50-60us after stop bit. Normal communication has a ~100us pause (second stop bits).
-  // The heater is answering after ~500-600us.
-  // If there is any issue I might have to add a delay here.
-  // Check when last byte was read from buffer and wait at least one baud time.
-  // It is working when I answer quicker.
 
   if (!this->observer_mode_) {
     this->current_PID_order_answered_ = true;
@@ -129,9 +105,7 @@ void LinBusListener::write_lin_answer_(const uint8_t *data, uint8_t len) {
 }
 
 bool LinBusListener::check_for_lin_fault_() {
-  // Check if Lin Bus is faulty.
   if (this->fault_pin_ != nullptr) {
-    // Fault pin is inverted (HIGH = no fault)
     if (!this->fault_pin_->digital_read()) {
       if (this->fault_on_lin_bus_reported_ < 0xFF) {
         this->fault_on_lin_bus_reported_++;
@@ -155,7 +129,6 @@ bool LinBusListener::check_for_lin_fault_() {
 
   if (this->get_lin_bus_fault()) {
     this->current_state_reset_();
-    // Ignore any data present in buffer
     this->clear_uart_buffer_();
     return true;
   } else {
@@ -167,8 +140,6 @@ void LinBusListener::on_receive_() {
   while (this->available()) {
     const uint32_t now = micros();
 
-    // ESPHome 2026 no longer gives this component a UART event queue / UART_BREAK event.
-    // Re-sync the LIN parser by treating a sufficiently long RX gap as a new frame boundary.
     if (this->last_data_recieved_ != 0 &&
         (now - this->last_data_recieved_) > this->time_per_lin_break_) {
       this->current_state_ = READ_STATE_BREAK;
@@ -190,7 +161,8 @@ void LinBusListener::read_lin_frame_() {
         if (this->current_data_count_ < 8) {
           log_msg.current_PID = this->current_PID_;
           if (this->current_PID_order_answered_) {
-            // Expectation is that I can see an echo of my data from the lin driver chip.
+            // ESP answered this PID — master sent no data back, which is normal for slave-response frames.
+            // Log as VERBOSE instead of ERROR to avoid log spam.
             log_msg.type = QUEUE_LOG_MSG_TYPE::ERROR_READ_LIN_FRAME_UNABLE_TO_ANSWER;
           } else {
             log_msg.type = QUEUE_LOG_MSG_TYPE::ERROR_READ_LIN_FRAME_LOST_MSG;
@@ -199,15 +171,18 @@ void LinBusListener::read_lin_frame_() {
             }
             log_msg.len = this->current_data_count_;
           }
-          TRUMA_LOGE_ISR(log_msg);
+          // Only log as error if ESP did NOT answer (true lost message).
+          // If ESP answered, this is expected behaviour for slave-response PIDs (0x18, 0x3D).
+          if (!this->current_PID_order_answered_) {
+            TRUMA_LOGE_ISR(log_msg);
+          } else {
+            TRUMA_LOGV_ISR(log_msg);
+          }
         }
       }
 
-      // Reset current state
       this->current_state_reset_();
 
-      // First is Break expected.
-      // Some setups expose the break as 0x00, others only let us see the following sync.
       if (!this->read_byte(&buf) || (buf != LIN_BREAK && buf != LIN_SYNC)) {
         log_msg.type = QUEUE_LOG_MSG_TYPE::VV_READ_LIN_FRAME_BREAK_EXPECTED;
         log_msg.current_PID = buf;
@@ -222,7 +197,6 @@ void LinBusListener::read_lin_frame_() {
       break;
 
     case READ_STATE_SYNC:
-      // Second is Sync expected
       if (!this->read_byte(&buf) || buf != LIN_SYNC) {
         log_msg.type = QUEUE_LOG_MSG_TYPE::VV_READ_LIN_FRAME_SYNC_EXPECTED;
         log_msg.current_PID = buf;
@@ -247,20 +221,16 @@ void LinBusListener::read_lin_frame_() {
 
       if (this->current_data_valid) {
         this->can_write_lin_answer_ = true;
-
-        // Should I response to this PID order? Ask the handling class.
         this->answer_lin_order_(this->current_PID_);
         this->can_write_lin_answer_ = false;
       }
 
-      // Even on error read data.
       this->current_state_ = READ_STATE_DATA;
       break;
 
     case READ_STATE_DATA: {
       auto current = micros();
       if (current > (this->last_data_recieved_ + this->time_per_first_byte_)) {
-        // timeout occurred.
         this->current_state_ = READ_STATE_BREAK;
         return;
       }
@@ -269,7 +239,6 @@ void LinBusListener::read_lin_frame_() {
       this->current_data_count_++;
 
       if (this->current_data_count_ >= sizeof(this->current_data_)) {
-        // End of data reached. There cannot be more than 9 bytes in a LIN frame.
         this->current_state_ = READ_STATE_ACT;
       }
       break;
@@ -324,7 +293,7 @@ void LinBusListener::read_lin_frame_() {
     log_msg.message_source_know = message_source_know;
     log_msg.message_from_master = message_from_master;
     TRUMA_LOGV_ISR(log_msg);
-#endif  // ESPHOME_LOG_HAS_VERBOSE
+#endif
 
     if (this->current_data_valid && message_from_master) {
       QUEUE_LIN_MSG lin_msg;
@@ -379,7 +348,9 @@ void LinBusListener::process_log_queue(TickType_t xTicksToWait) {
         ESP_LOGI(TAG, "Fault on LIN BUS fixed.");
         break;
       case QUEUE_LOG_MSG_TYPE::ERROR_READ_LIN_FRAME_UNABLE_TO_ANSWER:
-        ESP_LOGE(TAG, "PID %02X      order - unable to send response", current_PID);
+        // Downgraded to VERBOSE: ESP answered this PID correctly,
+        // master sent no data back — normal for slave-response frames (0x18, 0x3D).
+        ESP_LOGV(TAG, "PID %02X      order - answered, no master data (normal)", current_PID);
         break;
       case QUEUE_LOG_MSG_TYPE::ERROR_READ_LIN_FRAME_LOST_MSG:
         if (log_msg.len == 0) {
@@ -405,10 +376,9 @@ void LinBusListener::process_log_queue(TickType_t xTicksToWait) {
         ESP_LOGW(TAG, "LIN v2 CRC error");
         break;
       case QUEUE_LOG_MSG_TYPE::VERBOSE_READ_LIN_FRAME_MSG:
-        // Mark the PID of the TRUMA Combi heater as very verbose message.
         if (current_PID == 0x20 || current_PID == 0x21 || current_PID == 0x22 ||
             ((current_PID == DIAGNOSTIC_FRAME_MASTER || current_PID == DIAGNOSTIC_FRAME_SLAVE) &&
-             log_msg.data[0] == 0x01 /* ID of heater */)) {
+             log_msg.data[0] == 0x01)) {
           ESP_LOGVV(TAG, "PID %02X      %s %s %s", current_PID, format_hex_pretty(log_msg.data, log_msg.len).c_str(),
                     log_msg.message_source_know ? (log_msg.message_from_master ? " - MASTER" : " - SLAVE") : "",
                     log_msg.current_data_valid ? "" : "INVALID");
@@ -422,7 +392,7 @@ void LinBusListener::process_log_queue(TickType_t xTicksToWait) {
         break;
     }
   }
-#endif  // ESPHOME_LOG_LEVEL > ESPHOME_LOG_LEVEL_NONE
+#endif
 }
 
 #undef LIN_BREAK
