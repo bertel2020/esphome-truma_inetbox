@@ -46,24 +46,18 @@ void TrumaSensor::setup() {
     }
   });
 
+  // CP_PLUS_DISPLAY_STATUS und HEATING_STATUS kommen aus dem StatusFrameClock-Struct
+  // (display_1 und display_2 Bytes aus dem Status-Buffer SID 0xBB)
   this->parent_->get_clock()->add_on_message_callback([this](const StatusFrameClock *c) {
     switch (this->type_) {
       case TRUMA_SENSOR_TYPE::CLOCK_HOUR:
         this->publish_state(static_cast<float>(c->clock_hour)); break;
       case TRUMA_SENSOR_TYPE::CLOCK_MINUTE:
         this->publish_state(static_cast<float>(c->clock_minute)); break;
-      default: break;
-    }
-  });
-
-  // PID 0x22: CP Plus Display Status + Heating Status
-  // Quelle: danielfett/inetbox.py parse_status_2
-  this->parent_->get_display()->add_on_message_callback([this](const StatusFrameDisplay *d) {
-    switch (this->type_) {
       case TRUMA_SENSOR_TYPE::CP_PLUS_DISPLAY_STATUS:
-        this->publish_state(static_cast<float>(d->cp_plus_display)); break;
+        this->publish_state(static_cast<float>(c->display_1)); break;
       case TRUMA_SENSOR_TYPE::HEATING_STATUS:
-        this->publish_state(static_cast<float>(d->heating_status)); break;
+        this->publish_state(static_cast<float>(c->display_2)); break;
       default: break;
     }
   });
