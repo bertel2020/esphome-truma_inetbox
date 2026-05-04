@@ -13,6 +13,7 @@ TrumaiNetBoxApp::TrumaiNetBoxApp() {
   this->airconAuto_.set_parent(this);
   this->airconManual_.set_parent(this);
   this->clock_.set_parent(this);
+  this->display_.set_parent(this);
   this->heater_.set_parent(this);
   this->timer_.set_parent(this);
 }
@@ -22,6 +23,7 @@ void TrumaiNetBoxApp::update() {
   this->airconManual_.update();
   this->clock_.update();
   this->config_.update();
+  this->display_.update();
   this->heater_.update();
   this->timer_.update();
 
@@ -52,10 +54,21 @@ void TrumaiNetBoxApp::lin_reset_device() {
   this->airconManual_.reset();
   this->clock_.reset();
   this->config_.reset();
+  this->display_.reset();
   this->heater_.reset();
   this->timer_.reset();
 
   this->update_time_ = 0;
+}
+
+void TrumaiNetBoxApp::lin_message_recieved_(const uint8_t pid, const uint8_t *message, uint8_t length) {
+  // PID 0x22: CP Plus sends voltage, display status, heating status
+  // Source: danielfett/inetbox.py parse_status_2 + mc0110/inetbox2mqtt
+  if (pid == LIN_PID_CP_PLUS_STATUS_2) {
+    this->display_.set_display_status(message, length);
+    return;
+  }
+  LinBusProtocol::lin_message_recieved_(pid, message, length);
 }
 
 bool TrumaiNetBoxApp::answer_lin_order_(const uint8_t pid) {
