@@ -26,7 +26,7 @@ class LinBusProtocol : public LinBusListener {
   std::queue<std::array<uint8_t, 8>> updates_to_send_ = {};
 
  private:
-  uint8_t lin_node_address_ = 0x03;
+  uint8_t lin_node_address_ = /*LIN initial node address*/ 0x03;
 
   void prepare_update_msg_(const std::array<uint8_t, 8> message) { this->updates_to_send_.push(std::move(message)); }
   bool is_matching_identifier_(const uint8_t *message);
