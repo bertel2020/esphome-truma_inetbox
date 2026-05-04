@@ -92,6 +92,21 @@ void TrumaSensor::setup() {
         break;
     }
   });
+
+  // Callback für Display-Daten (PID 0x22)
+  // Quelle: danielfett/inetbox.py parse_status_2
+  this->parent_->get_display()->add_on_message_callback([this](const StatusFrameDisplay *status_display) {
+    switch (this->type_) {
+      case TRUMA_SENSOR_TYPE::CP_PLUS_DISPLAY_STATUS:
+        this->publish_state(static_cast<float>(status_display->cp_plus_display));
+        break;
+      case TRUMA_SENSOR_TYPE::HEATING_STATUS:
+        this->publish_state(static_cast<float>(status_display->heating_status));
+        break;
+      default:
+        break;
+    }
+  });
 }
 
 void TrumaSensor::dump_config() {
