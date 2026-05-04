@@ -40,10 +40,12 @@ void TrumaSensor::setup() {
         this->publish_state(errorcode);
         break;
       }
-      default: break;
+      default:
+        break;
     }
   });
 
+  // Callback für Timer-Daten
   this->parent_->get_timer()->add_on_message_callback([this](const StatusFrameTimer *status_timer) {
     switch (this->type_) {
       case TRUMA_SENSOR_TYPE::TIMER_START_TIME: {
@@ -60,19 +62,34 @@ void TrumaSensor::setup() {
       }
       case TRUMA_SENSOR_TYPE::TIMER_ROOM_TEMPERATURE:
         if (static_cast<uint8_t>(status_timer->timer_target_temp_room) == 0) {
-           this->publish_state(0.0f);
+          this->publish_state(0.0f);
         } else {
-           this->publish_state(temp_code_to_decimal(status_timer->timer_target_temp_room));
+          this->publish_state(temp_code_to_decimal(status_timer->timer_target_temp_room));
         }
         break;
       case TRUMA_SENSOR_TYPE::TIMER_WATER_TEMPERATURE:
         if (static_cast<uint8_t>(status_timer->timer_target_temp_water) == 0) {
-           this->publish_state(0.0f);
+          this->publish_state(0.0f);
         } else {
-           this->publish_state(temp_code_to_decimal(status_timer->timer_target_temp_water));
+          this->publish_state(temp_code_to_decimal(status_timer->timer_target_temp_water));
         }
         break;
-      default: break;
+      default:
+        break;
+    }
+  });
+
+  // Callback für Clock-Daten
+  this->parent_->get_clock()->add_on_message_callback([this](const StatusFrameClock *status_clock) {
+    switch (this->type_) {
+      case TRUMA_SENSOR_TYPE::CLOCK_HOUR:
+        this->publish_state(static_cast<float>(status_clock->clock_hour));
+        break;
+      case TRUMA_SENSOR_TYPE::CLOCK_MINUTE:
+        this->publish_state(static_cast<float>(status_clock->clock_minute));
+        break;
+      default:
+        break;
     }
   });
 }
