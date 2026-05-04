@@ -14,6 +14,7 @@ TrumaiNetBoxApp::TrumaiNetBoxApp() {
   this->airconManual_.set_parent(this);
   this->clock_.set_parent(this);
   // this->config_.set_parent(this);
+  this->display_.set_parent(this);
   this->heater_.set_parent(this);
   this->timer_.set_parent(this);
 }
@@ -27,6 +28,7 @@ void TrumaiNetBoxApp::update() {
   this->airconManual_.update();
   this->clock_.update();
   this->config_.update();
+  this->display_.update();
   this->heater_.update();
   this->timer_.update();
 
@@ -61,10 +63,26 @@ void TrumaiNetBoxApp::lin_reset_device() {
   this->airconManual_.reset();
   this->clock_.reset();
   this->config_.reset();
+  this->display_.reset();
   this->heater_.reset();
   this->timer_.reset();
 
   this->update_time_ = 0;
+}
+
+void TrumaiNetBoxApp::lin_message_recieved_(const uint8_t pid, const uint8_t *message, uint8_t length) {
+  // PID 0x22: CP Plus display status frame
+  // databytes[0] = voltage * 10
+  // databytes[1] = cp_plus_display_status  (CP_PLUS_DISPLAY_STATUS_MAPPING)
+  // databytes[2] = heating_status          (HEATING_STATUS_MAPPING)
+  // databytes[3] = heating_status_2        (HEATING_STATUS_2_MAPPING)
+  if (pid == LIN_PID_CP_PLUS_STATUS_2) {
+    this->display_.set_display_status(message, length);
+    return;
+  }
+
+  // Pass all other PIDs to base class handler
+  LinBusProtocol::lin_message_recieved_(pid, message, length);
 }
 
 bool TrumaiNetBoxApp::answer_lin_order_(const uint8_t pid) {
@@ -156,7 +174,7 @@ const uint8_t *TrumaiNetBoxApp::lin_multiframe_recieved(const uint8_t *message, 
 
   auto statusFrame = reinterpret_cast<const StatusFrame *>(message);
   auto header = &statusFrame->genericHeader;
-  
+
   if (header->checksum != data_checksum(&statusFrame->raw[10], sizeof(StatusFrame) - 10, (0xFF - header->checksum)) ||
       header->header_2 != 'T' || header->header_3 != 0x01) {
     ESP_LOGE(TAG, "Truma checksum fail.");
