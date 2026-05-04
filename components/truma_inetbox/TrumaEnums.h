@@ -17,15 +17,6 @@ enum class HeatingMode : u_int16_t {
   HEATING_MODE_HIGH = 0xA,
   // COMBI, Vario Heat
   HEATING_MODE_BOOST = 0xB,
-
-  // Feedback Invalid message only with following `heating_mode`. Others are ignored no feedback.
-  // 00FF
-  // 01FE
-  // 02FD
-  // ....
-  // FD02
-  // FE01
-  // FF00
 };
 
 enum class ElectricPowerLevel : u_int16_t {
@@ -37,11 +28,8 @@ enum class ElectricPowerLevel : u_int16_t {
 enum class TargetTemp : u_int16_t {
   TARGET_TEMP_OFF = 0x0,
 
-  // 40C
   TARGET_TEMP_WATER_ECO = (40 + 273) * 10,
-  // 60C
   TARGET_TEMP_WATER_HIGH = (60 + 273) * 10,
-  // 200C
   TARGET_TEMP_WATER_BOOST = (200 + 273) * 10,
 
   TARGET_TEMP_05C = (5 + 273) * 10,
@@ -95,7 +83,6 @@ enum class OperatingStatus : uint8_t {
   OPERATING_STATUS_OFF = 0x0,
   OPERATING_STATUS_WARNING = 0x1,
   OPERATING_STATUS_START_OR_COOL_DOWN = 0x4,
-  // ? Gas Heating mode ?
   OPERATING_STATUS_ON_5 = 0x5,
   OPERATING_STATUS_ON_6 = 0x6,
   OPERATING_STATUS_ON_7 = 0x7,
@@ -103,23 +90,44 @@ enum class OperatingStatus : uint8_t {
   OPERATING_STATUS_ON_9 = 0x9,
 };
 
+// CP Plus display status (from StatusFrameClock.display_1)
+// Source: mc0110/inetbox2mqtt CP_PLUS_DISPLAY_STATUS_MAPPING
+enum class CpPlusDisplayStatus : uint8_t {
+  CP_PLUS_DISPLAY_STANDBY_AC_OFF = 0x00,
+  CP_PLUS_DISPLAY_WARNING        = 0x01,
+  CP_PLUS_DISPLAY_STANDBY_AC_ON  = 0x20,
+  CP_PLUS_DISPLAY_BOILER_OFF     = 0x40,
+  CP_PLUS_DISPLAY_BOILER_ON      = 0x50,
+  CP_PLUS_DISPLAY_HEATING_ON     = 0xF0,
+  CP_PLUS_DISPLAY_ERROR          = 0xD0,
+  CP_PLUS_DISPLAY_FATAL_ERROR    = 0x70,
+};
+
+// Heating/boiler status (from StatusFrameClock.display_2)
+// Source: mc0110/inetbox2mqtt HEATING_STATUS_MAPPING
+enum class HeatingStatus : uint8_t {
+  HEATING_STATUS_BOILER_ECO_DONE    = 0x10,
+  HEATING_STATUS_BOILER_ECO_HEATING = 0x11,
+  HEATING_STATUS_BOILER_HOT_DONE    = 0x30,
+  HEATING_STATUS_BOILER_HOT_HEATING = 0x31,
+};
+
 enum class OperatingUnits : uint8_t {
-  OPERATING_UNITS_CELSIUS = 0x0,
+  OPERATING_UNITS_CELSIUS    = 0x0,
   OPERATING_UNITS_FAHRENHEIT = 0x1,
 };
 
 enum class Language : uint8_t {
-  LANGUAGE_GERMAN = 0x0,
+  LANGUAGE_GERMAN  = 0x0,
   LANGUAGE_ENGLISH = 0x1,
-  LANGUAGE_FRENCH = 0x2,
-  LANGUAGE_ITALY = 0x3,
+  LANGUAGE_FRENCH  = 0x2,
+  LANGUAGE_ITALY   = 0x3,
 };
 
 enum class ResponseAckResult : uint8_t {
-  RESPONSE_ACK_RESULT_OKAY = 0x0,
+  RESPONSE_ACK_RESULT_OKAY              = 0x0,
   RESPONSE_ACK_RESULT_ERROR_INVALID_MSG = 0x2,
-  // The response status frame `message_type` is unknown.
-  RESPONSE_ACK_RESULT_ERROR_INVALID_ID = 0x3,
+  RESPONSE_ACK_RESULT_ERROR_INVALID_ID  = 0x3,
 };
 
 enum class ClockMode : uint8_t {
@@ -128,60 +136,46 @@ enum class ClockMode : uint8_t {
 };
 
 enum class TimerActive : uint8_t {
-  TIMER_ACTIVE_ON = 0x1,
+  TIMER_ACTIVE_ON  = 0x1,
   TIMER_ACTIVE_OFF = 0x0,
 };
 
 enum class ClockSource : uint8_t {
-  // Set by user
   CLOCK_SOURCE_MANUAL = 0x1,
-  // Set by message
-  CLOCK_SOURCE_PROG = 0x2,
+  CLOCK_SOURCE_PROG   = 0x2,
 };
 
 enum class TRUMA_COMPANY : uint8_t {
   UNKNOWN = 0x00,
-  TRUMA = 0x1E,
-  ALDE = 0x1A,
+  TRUMA   = 0x1E,
+  ALDE    = 0x1A,
 };
 
 enum class TRUMA_DEVICE : uint8_t {
-  UNKNOWN = 0x00,
-
-  // Saphir Compact AC
-  AIRCON_DEVICE = 0x01,
-
-  // CP Plus for Combi
-  CPPLUS_COMBI = 0x04,
-  // CP Plus for Vario Heat
-  CPPLUS_VARIO = 0x05,
-
-  // Combi 4
-  HEATER_COMBI4 = 0x02,
-  // Vario Heat Comfort (non E)
-  HEATER_VARIO = 0x03,
-  // Old Truma CP6 (MY 2015)
-  HEATER_CP6 = 0x05,
-  // Combi 6 D
+  UNKNOWN        = 0x00,
+  AIRCON_DEVICE  = 0x01,
+  CPPLUS_COMBI   = 0x04,
+  CPPLUS_VARIO   = 0x05,
+  HEATER_COMBI4  = 0x02,
+  HEATER_VARIO   = 0x03,
+  HEATER_CP6     = 0x05,
   HEATER_COMBI6D = 0x06,
 };
 
 enum class TRUMA_DEVICE_STATE : uint8_t {
   OFFLINE = 0x00,
-  ONLINE = 0x01,
+  ONLINE  = 0x01,
 };
 
 enum class AirconMode : uint8_t {
-  // Auto - 18 to 25
-  OFF = 0x00,
+  OFF            = 0x00,
   AC_VENTILATION = 0x04,
-  AC_COOLING = 0x05,
+  AC_COOLING     = 0x05,
 };
 
 enum class AirconOperation : uint8_t {
   AC_ONLY = 0x71,
-  // Heater and Aircon
-  AUTO = 0x72,
+  AUTO    = 0x72,
 };
 
 }  // namespace truma_inetbox
