@@ -16,7 +16,8 @@ class LinBusProtocol : public LinBusListener {
   const std::array<uint8_t, 8> lin_empty_response_ = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
   bool answer_lin_order_(const uint8_t pid) override;
-  void lin_message_recieved_(const uint8_t pid, const uint8_t *message, uint8_t length) override;
+  // virtual allows TrumaiNetBoxApp to intercept PID 0x22 before base class handling
+  virtual void lin_message_recieved_(const uint8_t pid, const uint8_t *message, uint8_t length) override;
 
   virtual bool lin_read_field_by_identifier_(uint8_t identifier, std::array<uint8_t, 5> *response) = 0;
   virtual const uint8_t *lin_multiframe_recieved(const uint8_t *message, const uint8_t message_len,
