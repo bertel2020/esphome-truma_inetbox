@@ -7,6 +7,7 @@
 #include "TrumaiNetBoxAppAirconManual.h"
 #include "TrumaiNetBoxAppClock.h"
 #include "TrumaiNetBoxAppConfig.h"
+#include "TrumaiNetBoxAppDisplay.h"
 #include "TrumaiNetBoxAppHeater.h"
 #include "TrumaiNetBoxAppTimer.h"
 
@@ -19,7 +20,8 @@ namespace truma_inetbox {
 
 class TrumaiNetBoxApp;
 
-#define LIN_PID_TRUMA_INET_BOX 0x18
+#define LIN_PID_TRUMA_INET_BOX   0x18
+#define LIN_PID_CP_PLUS_STATUS_2 0x22  // CP Plus Display + Heating Status (PID 0x22)
 
 class TrumaiNetBoxApp : public LinBusProtocol {
  public:
@@ -37,6 +39,7 @@ class TrumaiNetBoxApp : public LinBusProtocol {
   TrumaiNetBoxAppAirconManual *get_aircon_manual()  { return &this->airconManual_; }
   TrumaiNetBoxAppClock        *get_clock()          { return &this->clock_; }
   TrumaiNetBoxAppConfig       *get_config()         { return &this->config_; }
+  TrumaiNetBoxAppDisplay      *get_display()        { return &this->display_; }
   TrumaiNetBoxAppHeater       *get_heater()         { return &this->heater_; }
   TrumaiNetBoxAppTimer        *get_timer()          { return &this->timer_; }
 
@@ -61,6 +64,7 @@ class TrumaiNetBoxApp : public LinBusProtocol {
   TrumaiNetBoxAppAirconManual airconManual_;
   TrumaiNetBoxAppClock        clock_;
   TrumaiNetBoxAppConfig       config_;
+  TrumaiNetBoxAppDisplay      display_;
   TrumaiNetBoxAppHeater       heater_;
   TrumaiNetBoxAppTimer        timer_;
 
@@ -75,6 +79,8 @@ class TrumaiNetBoxApp : public LinBusProtocol {
   bool lin_read_field_by_identifier_(uint8_t identifier, std::array<uint8_t, 5> *response) override;
   const uint8_t *lin_multiframe_recieved(const uint8_t *message, const uint8_t message_len,
                                           uint8_t *return_len) override;
+  // Intercepts PID 0x22 (CP Plus Display + Heating Status) before base class
+  void lin_message_recieved_(const uint8_t pid, const uint8_t *message, uint8_t length) override;
   bool has_update_to_submit_();
 };
 
