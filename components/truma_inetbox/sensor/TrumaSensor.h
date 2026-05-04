@@ -6,6 +6,7 @@
 
 namespace esphome {
 namespace truma_inetbox {
+
 enum class TRUMA_SENSOR_TYPE {
   UNKNOWN,
   CURRENT_ROOM_TEMPERATURE,
@@ -20,7 +21,9 @@ enum class TRUMA_SENSOR_TYPE {
   TIMER_START_TIME,
   TIMER_STOP_TIME,
   TIMER_ROOM_TEMPERATURE,
-  TIMER_WATER_TEMPERATURE
+  TIMER_WATER_TEMPERATURE,
+  CLOCK_HOUR,
+  CLOCK_MINUTE,
 };
 
 #ifdef ESPHOME_LOG_HAS_CONFIG
@@ -28,37 +31,31 @@ static const char *enum_to_c_str(const TRUMA_SENSOR_TYPE val) {
   switch (val) {
     case TRUMA_SENSOR_TYPE::CURRENT_ROOM_TEMPERATURE:
       return "CURRENT_ROOM_TEMPERATURE";
-      break;
     case TRUMA_SENSOR_TYPE::CURRENT_WATER_TEMPERATURE:
       return "CURRENT_WATER_TEMPERATURE";
-      break;
     case TRUMA_SENSOR_TYPE::TARGET_ROOM_TEMPERATURE:
       return "TARGET_ROOM_TEMPERATURE";
-      break;
     case TRUMA_SENSOR_TYPE::TARGET_WATER_TEMPERATURE:
       return "TARGET_WATER_TEMPERATURE";
-      break;
     case TRUMA_SENSOR_TYPE::HEATING_MODE:
       return "HEATING_MODE";
-      break;
     case TRUMA_SENSOR_TYPE::ELECTRIC_POWER_LEVEL:
       return "ELECTRIC_POWER_LEVEL";
-      break;
     case TRUMA_SENSOR_TYPE::ENERGY_MIX:
       return "ENERGY_MIX";
-      break;
     case TRUMA_SENSOR_TYPE::OPERATING_STATUS:
       return "OPERATING_STATUS";
-      break;
     case TRUMA_SENSOR_TYPE::HEATER_ERROR_CODE:
       return "HEATER_ERROR_CODE";
-      break;
+    case TRUMA_SENSOR_TYPE::CLOCK_HOUR:
+      return "CLOCK_HOUR";
+    case TRUMA_SENSOR_TYPE::CLOCK_MINUTE:
+      return "CLOCK_MINUTE";
     default:
       return "";
-      break;
   }
 }
-#endif // ESPHOME_LOG_HAS_CONFIG
+#endif  // ESPHOME_LOG_HAS_CONFIG
 
 class TrumaSensor : public Component, public sensor::Sensor, public Parented<TrumaiNetBoxApp> {
  public:
@@ -72,5 +69,6 @@ class TrumaSensor : public Component, public sensor::Sensor, public Parented<Tru
 
  private:
 };
+
 }  // namespace truma_inetbox
 }  // namespace esphome
