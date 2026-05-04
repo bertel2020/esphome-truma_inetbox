@@ -8,103 +8,63 @@ namespace truma_inetbox {
 static const char *const TAG = "truma_inetbox.sensor";
 
 void TrumaSensor::setup() {
-  // Callback für Heater-Daten
-  this->parent_->get_heater()->add_on_message_callback([this](const StatusFrameHeater *status_heater) {
+  this->parent_->get_heater()->add_on_message_callback([this](const StatusFrameHeater *h) {
     switch (this->type_) {
       case TRUMA_SENSOR_TYPE::CURRENT_ROOM_TEMPERATURE:
-        this->publish_state(temp_code_to_decimal(status_heater->current_temp_room));
-        break;
+        this->publish_state(temp_code_to_decimal(h->current_temp_room)); break;
       case TRUMA_SENSOR_TYPE::CURRENT_WATER_TEMPERATURE:
-        this->publish_state(temp_code_to_decimal(status_heater->current_temp_water));
-        break;
+        this->publish_state(temp_code_to_decimal(h->current_temp_water)); break;
       case TRUMA_SENSOR_TYPE::TARGET_ROOM_TEMPERATURE:
-        this->publish_state(temp_code_to_decimal(status_heater->target_temp_room));
-        break;
+        this->publish_state(temp_code_to_decimal(h->target_temp_room)); break;
       case TRUMA_SENSOR_TYPE::TARGET_WATER_TEMPERATURE:
-        this->publish_state(static_cast<float>(status_heater->target_temp_water));
-        break;
+        this->publish_state(static_cast<float>(h->target_temp_water)); break;
       case TRUMA_SENSOR_TYPE::HEATING_MODE:
-        this->publish_state(static_cast<float>(status_heater->heating_mode));
-        break;
+        this->publish_state(static_cast<float>(h->heating_mode)); break;
       case TRUMA_SENSOR_TYPE::ELECTRIC_POWER_LEVEL:
-        this->publish_state(static_cast<float>(status_heater->el_power_level_a));
-        break;
+        this->publish_state(static_cast<float>(h->el_power_level_a)); break;
       case TRUMA_SENSOR_TYPE::ENERGY_MIX:
-        this->publish_state(static_cast<float>(status_heater->energy_mix_a));
-        break;
+        this->publish_state(static_cast<float>(h->energy_mix_a)); break;
       case TRUMA_SENSOR_TYPE::OPERATING_STATUS:
-        this->publish_state(static_cast<float>(status_heater->operating_status));
-        break;
-      case TRUMA_SENSOR_TYPE::HEATER_ERROR_CODE: {
-        float errorcode = status_heater->error_code_high * 100.0f + status_heater->error_code_low;
-        this->publish_state(errorcode);
-        break;
-      }
-      default:
-        break;
+        this->publish_state(static_cast<float>(h->operating_status)); break;
+      case TRUMA_SENSOR_TYPE::HEATER_ERROR_CODE:
+        this->publish_state(h->error_code_high * 100.0f + h->error_code_low); break;
+      default: break;
     }
   });
 
-  // Callback für Timer-Daten
-  this->parent_->get_timer()->add_on_message_callback([this](const StatusFrameTimer *status_timer) {
+  this->parent_->get_timer()->add_on_message_callback([this](const StatusFrameTimer *t) {
     switch (this->type_) {
-      case TRUMA_SENSOR_TYPE::TIMER_START_TIME: {
-        uint8_t h = status_timer->timer_start_hours & 0x1F;
-        uint8_t m = status_timer->timer_start_minutes & 0x3F;
-        this->publish_state(static_cast<float>(h * 100 + m));
-        break;
-      }
-      case TRUMA_SENSOR_TYPE::TIMER_STOP_TIME: {
-        uint8_t h = status_timer->timer_stop_hours & 0x1F;
-        uint8_t m = status_timer->timer_stop_minutes & 0x3F;
-        this->publish_state(static_cast<float>(h * 100 + m));
-        break;
-      }
+      case TRUMA_SENSOR_TYPE::TIMER_START_TIME:
+        this->publish_state(static_cast<float>((t->timer_start_hours & 0x1F) * 100 + (t->timer_start_minutes & 0x3F))); break;
+      case TRUMA_SENSOR_TYPE::TIMER_STOP_TIME:
+        this->publish_state(static_cast<float>((t->timer_stop_hours & 0x1F) * 100 + (t->timer_stop_minutes & 0x3F))); break;
       case TRUMA_SENSOR_TYPE::TIMER_ROOM_TEMPERATURE:
-        if (static_cast<uint8_t>(status_timer->timer_target_temp_room) == 0) {
-          this->publish_state(0.0f);
-        } else {
-          this->publish_state(temp_code_to_decimal(status_timer->timer_target_temp_room));
-        }
-        break;
+        this->publish_state(static_cast<uint8_t>(t->timer_target_temp_room) == 0 ? 0.0f : temp_code_to_decimal(t->timer_target_temp_room)); break;
       case TRUMA_SENSOR_TYPE::TIMER_WATER_TEMPERATURE:
-        if (static_cast<uint8_t>(status_timer->timer_target_temp_water) == 0) {
-          this->publish_state(0.0f);
-        } else {
-          this->publish_state(temp_code_to_decimal(status_timer->timer_target_temp_water));
-        }
-        break;
-      default:
-        break;
+        this->publish_state(static_cast<uint8_t>(t->timer_target_temp_water) == 0 ? 0.0f : temp_code_to_decimal(t->timer_target_temp_water)); break;
+      default: break;
     }
   });
 
-  // Callback für Clock-Daten
-  this->parent_->get_clock()->add_on_message_callback([this](const StatusFrameClock *status_clock) {
+  this->parent_->get_clock()->add_on_message_callback([this](const StatusFrameClock *c) {
     switch (this->type_) {
       case TRUMA_SENSOR_TYPE::CLOCK_HOUR:
-        this->publish_state(static_cast<float>(status_clock->clock_hour));
-        break;
+        this->publish_state(static_cast<float>(c->clock_hour)); break;
       case TRUMA_SENSOR_TYPE::CLOCK_MINUTE:
-        this->publish_state(static_cast<float>(status_clock->clock_minute));
-        break;
-      default:
-        break;
+        this->publish_state(static_cast<float>(c->clock_minute)); break;
+      default: break;
     }
   });
 
-  // Callback für Display-Daten (PID 0x22)
+  // PID 0x22: CP Plus Display Status + Heating Status
   // Quelle: danielfett/inetbox.py parse_status_2
-  this->parent_->get_display()->add_on_message_callback([this](const StatusFrameDisplay *status_display) {
+  this->parent_->get_display()->add_on_message_callback([this](const StatusFrameDisplay *d) {
     switch (this->type_) {
       case TRUMA_SENSOR_TYPE::CP_PLUS_DISPLAY_STATUS:
-        this->publish_state(static_cast<float>(status_display->cp_plus_display));
-        break;
+        this->publish_state(static_cast<float>(d->cp_plus_display)); break;
       case TRUMA_SENSOR_TYPE::HEATING_STATUS:
-        this->publish_state(static_cast<float>(status_display->heating_status));
-        break;
-      default:
-        break;
+        this->publish_state(static_cast<float>(d->heating_status)); break;
+      default: break;
     }
   });
 }
