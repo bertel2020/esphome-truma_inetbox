@@ -53,7 +53,6 @@ class TrumaSensor : public Component, public sensor::Sensor, public Parented<Tru
  public:
   void setup() override;
   void dump_config() override;
-
   void set_type(TRUMA_SENSOR_TYPE val) { this->type_ = val; }
 
  protected:
