@@ -17,26 +17,36 @@ enum class HeatingMode : u_int16_t {
   HEATING_MODE_HIGH = 0xA,
   // COMBI, Vario Heat
   HEATING_MODE_BOOST = 0xB,
+  // Lüfter-Stufen (nur Lüfter, Heizung aus: target_temp_room = 0)
+  // Quelle: danielfett/inetbox.py + mc0110/inetbox2mqtt VENT_MODE_MAPPING
+  HEATING_MODE_VENT_1  = 0x01,
+  HEATING_MODE_VENT_2  = 0x02,
+  HEATING_MODE_VENT_3  = 0x03,
+  HEATING_MODE_VENT_4  = 0x04,
+  HEATING_MODE_VENT_5  = 0x05,
+  HEATING_MODE_VENT_6  = 0x06,
+  HEATING_MODE_VENT_7  = 0x07,
+  HEATING_MODE_VENT_8  = 0x08,
+  HEATING_MODE_VENT_9  = 0x09,
+  HEATING_MODE_VENT_10 = 0x0A,
 };
 
 enum class ElectricPowerLevel : u_int16_t {
-  ELECTRIC_POWER_LEVEL_0 = 0,
-  ELECTRIC_POWER_LEVEL_900 = 900,
+  ELECTRIC_POWER_LEVEL_0    = 0,
+  ELECTRIC_POWER_LEVEL_900  = 900,
   ELECTRIC_POWER_LEVEL_1800 = 1800,
 };
 
 enum class TargetTemp : u_int16_t {
-  TARGET_TEMP_OFF = 0x0,
-
-  TARGET_TEMP_WATER_ECO = (40 + 273) * 10,
-  TARGET_TEMP_WATER_HIGH = (60 + 273) * 10,
-  TARGET_TEMP_WATER_BOOST = (200 + 273) * 10,
-
-  TARGET_TEMP_05C = (5 + 273) * 10,
-  TARGET_TEMP_06C = (6 + 273) * 10,
-  TARGET_TEMP_07C = (7 + 273) * 10,
-  TARGET_TEMP_08C = (8 + 273) * 10,
-  TARGET_TEMP_09C = (9 + 273) * 10,
+  TARGET_TEMP_OFF          = 0x0,
+  TARGET_TEMP_WATER_ECO    = (40 + 273) * 10,
+  TARGET_TEMP_WATER_HIGH   = (60 + 273) * 10,
+  TARGET_TEMP_WATER_BOOST  = (200 + 273) * 10,
+  TARGET_TEMP_05C = (5  + 273) * 10,
+  TARGET_TEMP_06C = (6  + 273) * 10,
+  TARGET_TEMP_07C = (7  + 273) * 10,
+  TARGET_TEMP_08C = (8  + 273) * 10,
+  TARGET_TEMP_09C = (9  + 273) * 10,
   TARGET_TEMP_10C = (10 + 273) * 10,
   TARGET_TEMP_11C = (11 + 273) * 10,
   TARGET_TEMP_12C = (12 + 273) * 10,
@@ -59,39 +69,36 @@ enum class TargetTemp : u_int16_t {
   TARGET_TEMP_29C = (29 + 273) * 10,
   TARGET_TEMP_30C = (30 + 273) * 10,
   TARGET_TEMP_31C = (31 + 273) * 10,
-
-  TARGET_TEMP_ROOM_MIN = (5 + 273) * 10,
-  TARGET_TEMP_ROOM_MAX = (30 + 273) * 10,
-
-  TARGET_TEMP_AIRCON_MIN = (16 + 273) * 10,
-  TARGET_TEMP_AIRCON_MAX = (31 + 273) * 10,
-
+  TARGET_TEMP_ROOM_MIN       = (5  + 273) * 10,
+  TARGET_TEMP_ROOM_MAX       = (30 + 273) * 10,
+  TARGET_TEMP_AIRCON_MIN     = (16 + 273) * 10,
+  TARGET_TEMP_AIRCON_MAX     = (31 + 273) * 10,
   TARGET_TEMP_AIRCON_AUTO_MIN = (18 + 273) * 10,
   TARGET_TEMP_AIRCON_AUTO_MAX = (25 + 273) * 10,
 };
 
 enum class EnergyMix : uint8_t {
-  ENERGY_MIX_NONE = 0b00,
-  ENERGY_MIX_GAS = 0b01,
-  ENERGY_MIX_DIESEL = 0b01,
+  ENERGY_MIX_NONE        = 0b00,
+  ENERGY_MIX_GAS         = 0b01,
+  ENERGY_MIX_DIESEL      = 0b01,
   ENERGY_MIX_ELECTRICITY = 0b10,
-  ENERGY_MIX_MIX = 0b11,
+  ENERGY_MIX_MIX         = 0b11,
 };
 
 enum class OperatingStatus : uint8_t {
-  OPERATING_STATUS_UNSET = 0x0,
-  OPERATING_STATUS_OFF = 0x0,
-  OPERATING_STATUS_WARNING = 0x1,
+  OPERATING_STATUS_UNSET              = 0x0,
+  OPERATING_STATUS_OFF                = 0x0,
+  OPERATING_STATUS_WARNING            = 0x1,
   OPERATING_STATUS_START_OR_COOL_DOWN = 0x4,
-  OPERATING_STATUS_ON_5 = 0x5,
-  OPERATING_STATUS_ON_6 = 0x6,
-  OPERATING_STATUS_ON_7 = 0x7,
-  OPERATING_STATUS_ON_8 = 0x8,
-  OPERATING_STATUS_ON_9 = 0x9,
+  OPERATING_STATUS_ON_5               = 0x5,
+  OPERATING_STATUS_ON_6               = 0x6,
+  OPERATING_STATUS_ON_7               = 0x7,
+  OPERATING_STATUS_ON_8               = 0x8,
+  OPERATING_STATUS_ON_9               = 0x9,
 };
 
-// CP Plus display status (from StatusFrameClock.display_1)
-// Source: mc0110/inetbox2mqtt CP_PLUS_DISPLAY_STATUS_MAPPING
+// CP Plus Display Status (aus StatusFrameClock.display_1)
+// Quelle: danielfett/inetbox.py + mc0110/inetbox2mqtt CP_PLUS_DISPLAY_STATUS_MAPPING
 enum class CpPlusDisplayStatus : uint8_t {
   CP_PLUS_DISPLAY_STANDBY_AC_OFF = 0x00,
   CP_PLUS_DISPLAY_WARNING        = 0x01,
@@ -103,8 +110,8 @@ enum class CpPlusDisplayStatus : uint8_t {
   CP_PLUS_DISPLAY_FATAL_ERROR    = 0x70,
 };
 
-// Heating/boiler status (from StatusFrameClock.display_2)
-// Source: mc0110/inetbox2mqtt HEATING_STATUS_MAPPING
+// Heating/Boiler Status (aus StatusFrameClock.display_2)
+// Quelle: danielfett/inetbox.py + mc0110/inetbox2mqtt HEATING_STATUS_MAPPING
 enum class HeatingStatus : uint8_t {
   HEATING_STATUS_BOILER_ECO_DONE    = 0x10,
   HEATING_STATUS_BOILER_ECO_HEATING = 0x11,
