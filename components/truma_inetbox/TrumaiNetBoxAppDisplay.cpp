@@ -14,7 +14,7 @@ bool TrumaiNetBoxAppDisplay::set_display_status(const uint8_t *data, uint8_t len
   StatusFrameDisplay frame = {};
   memcpy(&frame, data, sizeof(StatusFrameDisplay));
   this->set_status(frame);
-  ESP_LOGD(TAG, "Display status: cp_plus=0x%02X heating=0x%02X heating2=0x%02X voltage=%.1fV",
+  ESP_LOGD(TAG, "Display: cp_plus=0x%02X heating=0x%02X heating2=0x%02X voltage=%.1fV",
            frame.cp_plus_display, frame.heating_status, frame.heating_status_2,
            (float) frame.voltage_raw / 10.0f);
   return true;
