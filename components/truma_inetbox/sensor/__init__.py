@@ -10,12 +10,10 @@ from esphome.const import (
     UNIT_CELSIUS,
     CONF_ICON,
     ICON_THERMOMETER,
-    STATE_CLASS_MEASUREMENT,
     CONF_ACCURACY_DECIMALS,
     CONF_DEVICE_CLASS,
     UNIT_WATT,
     UNIT_EMPTY,
-    ICON_GAS_CYLINDER,
     ICON_POWER,
 )
 from .. import truma_inetbox_ns, CONF_TRUMA_INETBOX_ID, TrumaINetBoxApp
@@ -124,6 +122,18 @@ CONF_SUPPORTED_TYPE = {
         CONF_ICON: "mdi:clock-outline",
         CONF_ACCURACY_DECIMALS: 0,
     },
+    "CP_PLUS_DISPLAY_STATUS": {
+        CONF_CLASS: TRUMA_SENSOR_TYPE_dummy_ns.CP_PLUS_DISPLAY_STATUS,
+        CONF_UNIT_OF_MEASUREMENT: UNIT_EMPTY,
+        CONF_ICON: "mdi:television",
+        CONF_ACCURACY_DECIMALS: 0,
+    },
+    "HEATING_STATUS": {
+        CONF_CLASS: TRUMA_SENSOR_TYPE_dummy_ns.HEATING_STATUS,
+        CONF_UNIT_OF_MEASUREMENT: UNIT_EMPTY,
+        CONF_ICON: "mdi:water-boiler",
+        CONF_ACCURACY_DECIMALS: 0,
+    },
 }
 
 
@@ -142,7 +152,6 @@ def set_default_based_on_type():
     return set_defaults_
 
 
-# Geändertes Schema für Kompatibilität mit ESPHome 2025
 CONFIG_SCHEMA = sensor.sensor_schema().extend(
     cv.Schema({
         cv.GenerateID(): cv.declare_id(TrumaSensor),
