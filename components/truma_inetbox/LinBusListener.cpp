@@ -252,7 +252,12 @@ void LinBusListener::read_lin_frame_() {
     case READ_STATE_DATA: {
       auto current = micros();
       if (current > (this->last_data_recieved_ + this->time_per_first_byte_)) {
-        this->current_state_ = READ_STATE_BREAK;
+        // Timeout — process frame if we have at least 2 bytes (1 data + 1 CRC)
+        if (this->current_data_count_ >= 2) {
+          this->current_state_ = READ_STATE_ACT;
+        } else {
+          this->current_state_ = READ_STATE_BREAK;
+        }
         return;
       }
       if (!this->available()) {
@@ -324,7 +329,7 @@ void LinBusListener::read_lin_frame_() {
     TRUMA_LOGV_ISR(log_msg);
 #endif
 
-    if (this->current_data_valid && message_from_master) {
+    if (this->current_data_valid && (message_from_master || this->current_PID_ == 0x22 || this->current_PID_ == 0x21 || this->current_PID_ == 0x20)) {
       QUEUE_LIN_MSG lin_msg;
       lin_msg.current_PID = this->current_PID_;
       lin_msg.len = this->current_data_count_ - 1;
@@ -408,7 +413,7 @@ void LinBusListener::process_log_queue(TickType_t xTicksToWait) {
         if (current_PID == 0x20 || current_PID == 0x21 || current_PID == 0x22 ||
             ((current_PID == DIAGNOSTIC_FRAME_MASTER || current_PID == DIAGNOSTIC_FRAME_SLAVE) &&
              log_msg.data[0] == 0x01)) {
-          ESP_LOGV(TAG, "PID %02X      %s %s %s", current_PID, format_hex_pretty(log_msg.data, log_msg.len).c_str(),
+          ESP_LOGVV(TAG, "PID %02X      %s %s %s", current_PID, format_hex_pretty(log_msg.data, log_msg.len).c_str(),
                     log_msg.message_source_know ? (log_msg.message_from_master ? " - MASTER" : " - SLAVE") : "",
                     log_msg.current_data_valid ? "" : "INVALID");
         } else {
