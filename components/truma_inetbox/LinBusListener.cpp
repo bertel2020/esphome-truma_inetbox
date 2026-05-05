@@ -29,8 +29,8 @@ void LinBusListener::setup() {
   this->time_per_baud_ = (1000.0f * 1000.0f / this->parent_->get_baud_rate());
   this->time_per_lin_break_ = this->time_per_baud_ * this->lin_break_length * 1.1f;
   this->time_per_pid_ = this->time_per_baud_ * this->frame_length_ * 1.1f;
-  this->time_per_first_byte_ = this->time_per_baud_ * this->frame_length_ * 5.0f;
-  this->time_per_byte_ = this->time_per_baud_ * this->frame_length_ * 1.1f;
+  this->time_per_first_byte_ = this->time_per_baud_ * this->frame_length_ * 10.0f;
+  this->time_per_byte_ = this->time_per_baud_ * this->frame_length_ * 3.0f;
 
   if (this->cs_pin_ != nullptr) {
     this->cs_pin_->setup();
