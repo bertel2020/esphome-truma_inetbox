@@ -1,35 +1,32 @@
 #include "TrumaiNetBoxApp.h"
 
-// Inline implementation of TrumaiNetBoxAppDisplay to ensure it is compiled
+// Inline TrumaiNetBoxAppDisplay implementation
 namespace esphome {
 namespace truma_inetbox {
-
 bool TrumaiNetBoxAppDisplay::set_display_status(const uint8_t *data, uint8_t length) {
-  static const char *const DISP_TAG = "truma_inetbox.display";
+  static const char *const TAG2 = "truma_inetbox.display";
   if (length < sizeof(StatusFrameDisplay)) {
-    ESP_LOGW(DISP_TAG, "Display status frame too short: %d bytes", length);
+    ESP_LOGW(TAG2, "Display frame too short: %d", length);
     return false;
   }
   StatusFrameDisplay frame = {};
   memcpy(&frame, data, sizeof(StatusFrameDisplay));
   this->set_status(frame);
-  ESP_LOGD(DISP_TAG, "Display: cp_plus=0x%02X heating=0x%02X heating2=0x%02X voltage=%.1fV",
+  ESP_LOGD(TAG2, "PID22: cp=0x%02X heat=0x%02X heat2=0x%02X v=%.1fV",
            frame.cp_plus_display, frame.heating_status, frame.heating_status_2,
-           (float) frame.voltage_raw / 10.0f);
+           (float)frame.voltage_raw / 10.0f);
   return true;
 }
-
 void TrumaiNetBoxAppDisplay::dump_data() const {
-  static const char *const DISP_TAG = "truma_inetbox.display";
+  static const char *const TAG2 = "truma_inetbox.display";
   if (!this->data_valid_) return;
-  ESP_LOGCONFIG(DISP_TAG, "  CP Plus Display: 0x%02X", this->data_.cp_plus_display);
-  ESP_LOGCONFIG(DISP_TAG, "  Heating Status:  0x%02X", this->data_.heating_status);
-  ESP_LOGCONFIG(DISP_TAG, "  Heating Status2: 0x%02X", this->data_.heating_status_2);
-  ESP_LOGCONFIG(DISP_TAG, "  Voltage:         %.1f V", (float) this->data_.voltage_raw / 10.0f);
+  ESP_LOGCONFIG(TAG2, "  CP Plus: 0x%02X  Heat: 0x%02X  V: %.1fV",
+                this->data_.cp_plus_display, this->data_.heating_status,
+                (float)this->data_.voltage_raw / 10.0f);
 }
-
 }  // namespace truma_inetbox
 }  // namespace esphome
+
 #include "TrumaStatusFrameBuilder.h"
 #include "esphome/core/log.h"
 #include "esphome/core/helpers.h"
@@ -92,15 +89,6 @@ void TrumaiNetBoxApp::lin_reset_device() {
   this->update_time_ = 0;
 }
 
-void TrumaiNetBoxApp::lin_message_recieved_(const uint8_t pid, const uint8_t *message, uint8_t length) {
-  // PID 0x22: CP Plus sends voltage, display status, heating status
-  // Source: danielfett/inetbox.py parse_status_2 + mc0110/inetbox2mqtt
-  if (pid == LIN_PID_CP_PLUS_STATUS_2) {
-    this->display_.set_display_status(message, length);
-    return;
-  }
-  LinBusProtocol::lin_message_recieved_(pid, message, length);
-}
 
 bool TrumaiNetBoxApp::answer_lin_order_(const uint8_t pid) {
   if (pid == LIN_PID_TRUMA_INET_BOX) {
