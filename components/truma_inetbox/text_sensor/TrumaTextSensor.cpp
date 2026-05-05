@@ -35,9 +35,9 @@ void TrumaTextSensor::setup() {
             case 0x20: s = "Standby - AC On";   break;
             case 0x50: s = "Boiler On";         break;
             case 0x40: s = "Boiler Off";        break;
+            case 0xF0: s = "Heating On";        break;
             case 0xD0: s = "Error";             break;
             case 0x70: s = "Fatal Error";       break;
-            case 0xF0: s = "Heating On";        break;
           }
           this->publish_state(s);
           break;
@@ -68,18 +68,33 @@ void TrumaTextSensor::setup() {
       }
     });
   }
+
+  // OperatingStatus aus Heater-Frame
+  if (this->type_ == TRUMA_TEXT_SENSOR_TYPE::OPERATING_STATUS) {
+    this->parent_->get_heater()->add_on_message_callback([this](const StatusFrameHeater *h) {
+      const char *s = "Unknown";
+      switch (h->operating_status) {
+        case OperatingStatus::OPERATING_STATUS_OFF:                s = "Off";               break;
+        case OperatingStatus::OPERATING_STATUS_WARNING:            s = "Warning";           break;
+        case OperatingStatus::OPERATING_STATUS_START_OR_COOL_DOWN: s = "Start / Cool Down"; break;
+        case OperatingStatus::OPERATING_STATUS_ON_5:               s = "On";                break;
+        case OperatingStatus::OPERATING_STATUS_ON_6:               s = "On";                break;
+        case OperatingStatus::OPERATING_STATUS_ON_7:               s = "On";                break;
+        case OperatingStatus::OPERATING_STATUS_ON_8:               s = "On";                break;
+        case OperatingStatus::OPERATING_STATUS_ON_9:               s = "On";                break;
+      }
+      this->publish_state(s);
+    });
+  }
 }
 
 void TrumaTextSensor::update_status() {
   switch (this->type_) {
     case TRUMA_TEXT_SENSOR_TYPE::UPDATE_STATUS: {
-      // Entspricht danielfett/inetbox.py send_update_status()
       std::string status;
       if (!this->parent_->get_heater()->get_status_valid()) {
-        // Noch kein Status vom CP Plus empfangen
         status = "Warte auf CP Plus";
       } else if (this->parent_->has_pending_updates()) {
-        // Update in Queue, wird an Truma gesendet
         status = "Warte auf Truma";
       } else {
         status = "Leerlauf";
@@ -89,17 +104,13 @@ void TrumaTextSensor::update_status() {
       }
       break;
     }
-
     case TRUMA_TEXT_SENSOR_TYPE::CP_PLUS_STATUS: {
-      // Entspricht danielfett/inetbox.py send_cp_plus_status()
-      // can_send_updates = erster Heater-Status-Frame empfangen
       std::string status = this->parent_->get_heater()->get_status_valid() ? "online" : "warte...";
       if (!this->has_state() || this->state != status) {
         this->publish_state(status);
       }
       break;
     }
-
     default:
       break;
   }
