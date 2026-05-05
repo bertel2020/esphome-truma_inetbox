@@ -27,18 +27,16 @@ void LinBusProtocol::lin_reset_device(){
 }
 
 bool LinBusProtocol::answer_lin_order_(const uint8_t pid) {
-  // Send requested answer on DIAGNOSTIC_FRAME_SLAVE (0x3D)
   if (pid == DIAGNOSTIC_FRAME_SLAVE) {
     if (!this->updates_to_send_.empty()) {
       auto update_to_send_ = this->updates_to_send_.front();
       this->updates_to_send_.pop();
       this->write_lin_answer_(update_to_send_.data(), (uint8_t) update_to_send_.size());
-    } else {
-      // Queue empty: send empty response (0xFF bytes) to avoid "unable to send response" warning.
-      // The original iNetBox sends 0xFF bytes when it has nothing to say.
-      this->write_lin_answer_(this->lin_empty_response_.data(), (uint8_t) this->lin_empty_response_.size());
+      return true;
     }
-    return true;
+    // Queue empty: do NOT answer, let CP Plus send data passively
+    // (same behaviour as danielfett/inetbox.py which only answers when response_waiting())
+    return false;
   }
   return false;
 }
