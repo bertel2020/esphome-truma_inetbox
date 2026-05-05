@@ -229,22 +229,20 @@ void LinBusListener::read_lin_frame_() {
       break;
 
     case READ_STATE_DATA: {
-      // Blockend alle 8 Datenbytes + 1 Checksum-Byte lesen
-      // Wie danielfett/inetbox.py: serial.read(9) nach PID-Erkennung
+      // Blockend alle 8 Datenbytes + 1 Checksum-Byte lesen.
+      // vTaskDelay(1) gibt dem FreeRTOS UART-Task Zeit den Buffer zu füllen.
       auto deadline = micros() + this->time_per_first_byte_;
       while (this->current_data_count_ < sizeof(this->current_data_)) {
-        // Warte auf nächstes Byte
-        while (!this->available()) {
+        if (!this->available()) {
           if (micros() > deadline) {
-            // Timeout: Frame unvollständig
             this->current_state_ = READ_STATE_BREAK;
             return;
           }
-          delayMicroseconds(5);
+          vTaskDelay(1);  // yield to UART task
+          continue;
         }
         this->read_byte(&buf);
         this->current_data_[this->current_data_count_++] = buf;
-        // Deadline nach jedem Byte verlängern (inter-byte timeout)
         deadline = micros() + this->time_per_byte_;
       }
       this->current_state_ = READ_STATE_ACT;
