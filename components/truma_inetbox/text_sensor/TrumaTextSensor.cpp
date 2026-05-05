@@ -6,9 +6,6 @@ namespace truma_inetbox {
 
 static const char *const TAG = "truma_inetbox.text_sensor";
 
-// CP Plus gilt als offline wenn seit mehr als 10 Sekunden kein Heartbeat empfangen
-static const uint32_t CP_PLUS_TIMEOUT_US = 10 * 1000 * 1000;
-
 void TrumaTextSensor::setup() {
   // Callback für Uhrzeit
   this->parent_->get_clock()->add_on_message_callback([this](const StatusFrameClock *c) {
@@ -28,17 +25,14 @@ void TrumaTextSensor::setup() {
 void TrumaTextSensor::update_status() {
   switch (this->type_) {
     case TRUMA_TEXT_SENSOR_TYPE::UPDATE_STATUS: {
-      // Entspricht danielfett/inetbox.py TRANSLATIONS_STATES update_status
+      // Entspricht danielfett/inetbox.py send_update_status()
       std::string status;
-      if (this->parent_->get_last_cp_plus_request() == 0) {
-        // Noch kein Heartbeat empfangen → kein Init möglich
-        status = "Warte auf CP Plus";
-      } else if (!this->parent_->get_heater()->get_status_valid()) {
-        // Init empfangen aber noch kein Heater-Status
+      if (!this->parent_->get_heater()->get_status_valid()) {
+        // Noch kein Status vom CP Plus empfangen
         status = "Warte auf CP Plus";
       } else if (this->parent_->has_pending_updates()) {
-        // Update in Queue, wird gesendet
-        status = "Warte auf Versand";
+        // Update in Queue, wird an Truma gesendet
+        status = "Warte auf Truma";
       } else {
         status = "Leerlauf";
       }
@@ -49,15 +43,9 @@ void TrumaTextSensor::update_status() {
     }
 
     case TRUMA_TEXT_SENSOR_TYPE::CP_PLUS_STATUS: {
-      // Entspricht danielfett/inetbox.py cp_plus_status
-      std::string status;
-      uint32_t last = (uint32_t) this->parent_->get_last_cp_plus_request();
-      if (last == 0) {
-        status = "warte...";
-      } else {
-        uint32_t elapsed = micros() - last;
-        status = (elapsed < CP_PLUS_TIMEOUT_US) ? "online" : "warte...";
-      }
+      // Entspricht danielfett/inetbox.py send_cp_plus_status()
+      // can_send_updates = erster Heater-Status-Frame empfangen
+      std::string status = this->parent_->get_heater()->get_status_valid() ? "online" : "warte...";
       if (!this->has_state() || this->state != status) {
         this->publish_state(status);
       }
