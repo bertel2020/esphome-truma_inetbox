@@ -86,6 +86,22 @@ void TrumaTextSensor::setup() {
       this->publish_state(s);
     });
   }
+
+  // HeatingMode aus Heater-Frame
+  if (this->type_ == TRUMA_TEXT_SENSOR_TYPE::HEATING_MODE) {
+    this->parent_->get_heater()->add_on_message_callback([this](const StatusFrameHeater *h) {
+      const char *s = "Unknown";
+      switch (h->heating_mode) {
+        case HeatingMode::HEATING_MODE_OFF:               s = "Off";              break;
+        case HeatingMode::HEATING_MODE_ECO:               s = "Eco";              break;
+        case HeatingMode::HEATING_MODE_VARIO_HEAT_NIGHT:  s = "Vario Heat Night"; break;
+        case HeatingMode::HEATING_MODE_VARIO_HEAT_AUTO:   s = "Vario Heat Auto";  break;
+        case HeatingMode::HEATING_MODE_HIGH:              s = "High";             break;
+        case HeatingMode::HEATING_MODE_BOOST:             s = "Boost";            break;
+      }
+      this->publish_state(s);
+    });
+  }
 }
 
 void TrumaTextSensor::update_status() {
