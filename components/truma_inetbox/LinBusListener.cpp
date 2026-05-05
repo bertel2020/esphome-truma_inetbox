@@ -274,10 +274,12 @@ void LinBusListener::read_lin_frame_() {
     uint8_t data_CRC = this->current_data_[this->current_data_count_ - 1];
     bool message_source_know = false;
     bool message_from_master = true;
+    // Only validate CRC for complete frames (9 bytes = 8 data + 1 CRC)
+    bool full_frame = (this->current_data_count_ == sizeof(this->current_data_));
 
     if (this->lin_checksum_ == LIN_CHECKSUM::LIN_CHECKSUM_VERSION_1 ||
         (this->current_PID_ == DIAGNOSTIC_FRAME_MASTER || this->current_PID_ == DIAGNOSTIC_FRAME_SLAVE)) {
-      if (data_CRC != data_checksum(this->current_data_, data_length, 0)) {
+      if (full_frame && data_CRC != data_checksum(this->current_data_, data_length, 0)) {
         log_msg.type = QUEUE_LOG_MSG_TYPE::WARN_READ_LIN_FRAME_LINv1_CRC;
         TRUMA_LOGW_ISR(log_msg);
         this->current_data_valid = false;
@@ -290,17 +292,19 @@ void LinBusListener::read_lin_frame_() {
         message_from_master = false;
       }
     } else {
-      uint8_t data_CRC_master = data_checksum(this->current_data_, data_length, this->current_PID_);
-      uint8_t data_CRC_slave = data_checksum(this->current_data_, data_length, this->current_PID_with_parity_);
-      if (data_CRC != data_CRC_master && data_CRC != data_CRC_slave) {
-        log_msg.type = QUEUE_LOG_MSG_TYPE::WARN_READ_LIN_FRAME_LINv2_CRC;
-        TRUMA_LOGW_ISR(log_msg);
-        this->current_data_valid = false;
+      if (full_frame) {
+        uint8_t data_CRC_master = data_checksum(this->current_data_, data_length, this->current_PID_);
+        uint8_t data_CRC_slave = data_checksum(this->current_data_, data_length, this->current_PID_with_parity_);
+        if (data_CRC != data_CRC_master && data_CRC != data_CRC_slave) {
+          log_msg.type = QUEUE_LOG_MSG_TYPE::WARN_READ_LIN_FRAME_LINv2_CRC;
+          TRUMA_LOGW_ISR(log_msg);
+          this->current_data_valid = false;
+        }
+        if (data_CRC == data_CRC_slave) {
+          message_from_master = false;
+        }
       }
       message_source_know = true;
-      if (data_CRC == data_CRC_slave) {
-        message_from_master = false;
-      }
     }
 
 #ifdef ESPHOME_LOG_HAS_VERBOSE
