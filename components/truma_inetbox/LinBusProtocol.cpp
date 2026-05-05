@@ -27,10 +27,7 @@ void LinBusProtocol::lin_reset_device(){
 }
 
 bool LinBusProtocol::answer_lin_order_(const uint8_t pid) {
-  // PID 0x3D, 0x21, 0x22: all are response slots used by CP Plus to request
-  // frames from the ESP during a multi-frame upload (BA protocol).
-  // 0x3D = first frame, 0x21/0x22 = consecutive frames.
-  if (pid == DIAGNOSTIC_FRAME_SLAVE || pid == 0x21 || pid == 0x22) {
+  if (pid == DIAGNOSTIC_FRAME_SLAVE) {
     if (!this->updates_to_send_.empty()) {
       auto update_to_send_ = this->updates_to_send_.front();
       this->updates_to_send_.pop();
