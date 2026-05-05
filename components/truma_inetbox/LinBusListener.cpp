@@ -229,25 +229,25 @@ void LinBusListener::read_lin_frame_() {
       break;
 
     case READ_STATE_DATA: {
-      // Wait for byte to be available with timeout
-      // This handles the case where loop() is called between bytes of a frame
+      // Blockend alle 8 Datenbytes + 1 Checksum-Byte lesen
+      // Wie danielfett/inetbox.py: serial.read(9) nach PID-Erkennung
       auto deadline = micros() + this->time_per_first_byte_;
-      while (!this->available()) {
-        if (micros() > deadline) {
-          this->current_state_ = READ_STATE_BREAK;
-          return;
+      while (this->current_data_count_ < sizeof(this->current_data_)) {
+        // Warte auf nächstes Byte
+        while (!this->available()) {
+          if (micros() > deadline) {
+            // Timeout: Frame unvollständig
+            this->current_state_ = READ_STATE_BREAK;
+            return;
+          }
+          delayMicroseconds(5);
         }
-        delayMicroseconds(10);
+        this->read_byte(&buf);
+        this->current_data_[this->current_data_count_++] = buf;
+        // Deadline nach jedem Byte verlängern (inter-byte timeout)
+        deadline = micros() + this->time_per_byte_;
       }
-      this->read_byte(&buf);
-      this->current_data_[this->current_data_count_] = buf;
-      this->current_data_count_++;
-      // Update timestamp after each byte
-      this->last_data_recieved_ = micros();
-
-      if (this->current_data_count_ >= sizeof(this->current_data_)) {
-        this->current_state_ = READ_STATE_ACT;
-      }
+      this->current_state_ = READ_STATE_ACT;
       break;
     }
 
