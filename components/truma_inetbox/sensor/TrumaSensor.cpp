@@ -71,6 +71,10 @@ void TrumaSensor::setup() {
         this->publish_state(static_cast<float>(d->cp_plus_display)); break;
       case TRUMA_SENSOR_TYPE::HEATING_STATUS:
         this->publish_state(static_cast<float>(d->heating_status)); break;
+      case TRUMA_SENSOR_TYPE::HEATING_STATUS_2:
+        this->publish_state(static_cast<float>(d->heating_status_2)); break;
+      case TRUMA_SENSOR_TYPE::CP_PLUS_VOLTAGE:
+        this->publish_state(static_cast<float>(d->voltage_raw) / 10.0f); break;
       default: break;
     }
   });
