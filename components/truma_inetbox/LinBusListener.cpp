@@ -58,7 +58,7 @@ void LinBusListener::update() { this->check_for_lin_fault_(); }
 
 void LinBusListener::loop() {
   if (!this->check_for_lin_fault_()) {
-    if (this->available() > 0) {
+    if (this->available() > 0 || this->current_state_ == READ_STATE_DATA) {
       this->on_receive_();
     }
   }
@@ -150,7 +150,7 @@ bool LinBusListener::check_for_lin_fault_() {
 }
 
 void LinBusListener::on_receive_() {
-  while (this->available()) {
+  while (this->available() || this->current_state_ == READ_STATE_DATA) {
     const uint32_t now = micros();
 
     if (this->last_data_recieved_ != 0 &&
@@ -158,8 +158,17 @@ void LinBusListener::on_receive_() {
       this->current_state_ = READ_STATE_BREAK;
     }
 
+    bool had_data = this->available();
     this->read_lin_frame_();
-    this->last_data_recieved_ = micros();
+    // Only update timestamp when a byte was consumed, not on empty-wait
+    if (had_data) {
+      this->last_data_recieved_ = micros();
+    }
+
+    // If still in DATA state but no bytes available, exit and let next loop() call retry
+    if (this->current_state_ == READ_STATE_DATA && !this->available()) {
+      break;
+    }
   }
 }
 
