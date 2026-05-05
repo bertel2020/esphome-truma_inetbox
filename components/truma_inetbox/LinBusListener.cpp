@@ -174,9 +174,8 @@ void LinBusListener::read_lin_frame_() {
             // ESP answered — master sent no data back (normal for slave-response frames)
             log_msg.type = QUEUE_LOG_MSG_TYPE::ERROR_READ_LIN_FRAME_UNABLE_TO_ANSWER;
             TRUMA_LOGV_ISR(log_msg);
-          } else if (this->current_PID_ == DIAGNOSTIC_FRAME_SLAVE ||
-                     this->current_PID_ == 0x21 || this->current_PID_ == 0x22) {
-            // 0x3D/0x21/0x22 not answered (queue empty) — reading passively, this is normal
+          } else if (this->current_PID_ == DIAGNOSTIC_FRAME_SLAVE) {
+            // 0x3D not answered (queue empty) — reading passively, this is normal
             log_msg.type = QUEUE_LOG_MSG_TYPE::ERROR_READ_LIN_FRAME_LOST_MSG;
             TRUMA_LOGV_ISR(log_msg);
           } else {
@@ -245,11 +244,15 @@ void LinBusListener::read_lin_frame_() {
         return;
       }
       if (!this->available()) {
-        return;  // Kein Byte verfügbar, nächster loop()-Aufruf versucht es erneut
+        // Busy-wait a short time before returning to loop() 
+        // This avoids FreeRTOS preemption between bytes of a frame.
+        // ets_delay_us() does NOT yield to other tasks (unlike vTaskDelay).
+        ets_delay_us(200);
+        return;
       }
       this->read_byte(&buf);
       this->current_data_[this->current_data_count_++] = buf;
-      this->last_data_recieved_ = micros();  // Timeout nach jedem Byte zurücksetzen
+      this->last_data_recieved_ = micros();
 
       if (this->current_data_count_ >= sizeof(this->current_data_)) {
         this->current_state_ = READ_STATE_ACT;
