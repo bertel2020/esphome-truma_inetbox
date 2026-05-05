@@ -10,12 +10,16 @@ namespace truma_inetbox {
 enum class TRUMA_TEXT_SENSOR_TYPE {
   UNKNOWN,
   CLOCK,
+  UPDATE_STATUS,
+  CP_PLUS_STATUS,
 };
 
 #ifdef ESPHOME_LOG_HAS_CONFIG
 static const char *enum_to_c_str(const TRUMA_TEXT_SENSOR_TYPE val) {
   switch (val) {
-    case TRUMA_TEXT_SENSOR_TYPE::CLOCK: return "CLOCK";
+    case TRUMA_TEXT_SENSOR_TYPE::CLOCK:          return "CLOCK";
+    case TRUMA_TEXT_SENSOR_TYPE::UPDATE_STATUS:  return "UPDATE_STATUS";
+    case TRUMA_TEXT_SENSOR_TYPE::CP_PLUS_STATUS: return "CP_PLUS_STATUS";
     default: return "";
   }
 }
@@ -24,6 +28,7 @@ static const char *enum_to_c_str(const TRUMA_TEXT_SENSOR_TYPE val) {
 class TrumaTextSensor : public Component, public text_sensor::TextSensor, public Parented<TrumaiNetBoxApp> {
  public:
   void setup() override;
+  void update_status();
   void dump_config() override;
   void set_type(TRUMA_TEXT_SENSOR_TYPE val) { this->type_ = val; }
 
