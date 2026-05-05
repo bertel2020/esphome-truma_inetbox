@@ -92,10 +92,23 @@ void LinBusListener::write_lin_answer_(const uint8_t *data, uint8_t len) {
     this->current_PID_order_answered_ = true;
     this->write_array(data, len);
     this->write(data_CRC);
+    // flush() waits for TX FIFO empty, but last byte's bits are still being transmitted.
+    // Wait for FIFO + 1 extra frame time to ensure last byte is fully sent.
     this->flush();
-    // Reset gap timer so the next received byte (from echo or next frame)
-    // triggers a state reset in on_receive_() via the gap detector.
-    // This ensures echo bytes and the next LIN frame are handled correctly.
+    // Extra delay for last byte shift register: 1 frame = 11 bits at 9600 baud = 1146µs
+    delayMicroseconds((uint32_t)(this->time_per_baud_ * this->frame_length_ * 1.5f));
+    // Now all echo bytes should be in RX buffer. Read exactly len+1 bytes.
+    uint8_t echo;
+    uint32_t deadline = micros() + (uint32_t)(this->time_per_baud_ * this->frame_length_ * 3.0f);
+    for (uint8_t i = 0; i < (len + 1); i++) {
+      while (!this->available() && micros() < deadline) {}
+      if (this->available()) {
+        this->read_byte(&echo);
+        // Reset deadline for next byte
+        deadline = micros() + (uint32_t)(this->time_per_baud_ * this->frame_length_ * 2.0f);
+      }
+    }
+    // Reset gap timer - next byte starts a fresh frame
     this->last_data_recieved_ = 0;
   }
 
