@@ -154,7 +154,8 @@ void LinBusListener::on_receive_() {
     const uint32_t now = micros();
 
     if (this->last_data_recieved_ != 0 &&
-        (now - this->last_data_recieved_) > this->time_per_lin_break_) {
+        (now - this->last_data_recieved_) > this->time_per_lin_break_ &&
+        this->current_state_ != READ_STATE_ACT) {
       this->current_state_ = READ_STATE_BREAK;
     }
 
