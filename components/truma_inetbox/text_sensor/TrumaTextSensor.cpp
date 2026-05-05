@@ -20,6 +20,53 @@ void TrumaTextSensor::setup() {
       this->type_ == TRUMA_TEXT_SENSOR_TYPE::CP_PLUS_STATUS) {
     this->parent_->add_on_update_callback([this]() { this->update_status(); });
   }
+
+  // Display-Status Text-Sensoren aus PID 0x22
+  if (this->type_ == TRUMA_TEXT_SENSOR_TYPE::CP_PLUS_DISPLAY_STATUS ||
+      this->type_ == TRUMA_TEXT_SENSOR_TYPE::HEATING_STATUS ||
+      this->type_ == TRUMA_TEXT_SENSOR_TYPE::HEATING_STATUS_2) {
+    this->parent_->get_display()->add_on_message_callback([this](const StatusFrameDisplay *d) {
+      switch (this->type_) {
+        case TRUMA_TEXT_SENSOR_TYPE::CP_PLUS_DISPLAY_STATUS: {
+          const char *s = "Unknown";
+          switch (d->cp_plus_display) {
+            case 0xF0: s = "Heating On";    break;
+            case 0x20: s = "Standby AC On"; break;
+            case 0x00: s = "Standby AC Off";break;
+            case 0xD0: s = "Error";         break;
+            case 0x70: s = "Fatal Error";   break;
+            case 0x50: s = "Boiler On";     break;
+            case 0x40: s = "Boiler Off";    break;
+          }
+          this->publish_state(s);
+          break;
+        }
+        case TRUMA_TEXT_SENSOR_TYPE::HEATING_STATUS: {
+          const char *s = "Unknown";
+          switch (d->heating_status) {
+            case 0x10: s = "Boiler ECO Done";    break;
+            case 0x11: s = "Boiler ECO Heating"; break;
+            case 0x30: s = "Boiler HOT Done";    break;
+            case 0x31: s = "Boiler HOT Heating"; break;
+          }
+          this->publish_state(s);
+          break;
+        }
+        case TRUMA_TEXT_SENSOR_TYPE::HEATING_STATUS_2: {
+          const char *s = "Unknown";
+          switch (d->heating_status_2) {
+            case 0x04: s = "Normal";       break;
+            case 0x05: s = "Error";        break;
+            case 0xFF: s = "Fatal Error";  break;
+            case 0xFE: s = "Normal (?)";   break;
+          }
+          this->publish_state(s);
+          break;
+        }
+        default: break;
+      }
+    });
+  }
 }
 
 void TrumaTextSensor::update_status() {
