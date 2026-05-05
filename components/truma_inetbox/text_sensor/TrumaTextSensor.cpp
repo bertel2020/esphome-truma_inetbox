@@ -37,6 +37,7 @@ void TrumaTextSensor::setup() {
             case 0x40: s = "Boiler Off";        break;
             case 0xD0: s = "Error";             break;
             case 0x70: s = "Fatal Error";       break;
+            case 0xF0: s = "Heating On";        break;
           }
           this->publish_state(s);
           break;
