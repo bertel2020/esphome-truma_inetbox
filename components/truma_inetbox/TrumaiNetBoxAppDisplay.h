@@ -20,10 +20,7 @@ struct StatusFrameDisplay {  // NOLINT(altera-struct-pack-align)
   uint8_t cp_plus_display;  // byte 1: CP_PLUS_DISPLAY_STATUS_MAPPING
   uint8_t heating_status;   // byte 2: HEATING_STATUS_MAPPING
   uint8_t heating_status_2; // byte 3: HEATING_STATUS_2_MAPPING
-  uint8_t unknown_4;
-  uint8_t unknown_5;
-  uint8_t unknown_6;
-  uint8_t unknown_7;
+  // bytes 4-7: unknown, not required
 } __attribute__((packed));
 
 class TrumaiNetBoxAppDisplay : public TrumaStausFrameStorage<StatusFrameDisplay>,
