@@ -29,9 +29,7 @@ void LinBusListener::setup() {
   this->time_per_baud_ = (1000.0f * 1000.0f / this->parent_->get_baud_rate());
   this->time_per_lin_break_ = this->time_per_baud_ * this->lin_break_length * 1.1f;
   this->time_per_pid_ = this->time_per_baud_ * this->frame_length_ * 1.1f;
-  // Increased multiplier to reliably receive short LIN frames (PID 0x20/0x21/0x22)
-  // sent by CP Plus. ESPHome 2026 UART polling may introduce latency.
-  this->time_per_first_byte_ = this->time_per_baud_ * this->frame_length_ * 15.0f;
+  this->time_per_first_byte_ = this->time_per_baud_ * this->frame_length_ * 5.0f;
   this->time_per_byte_ = this->time_per_baud_ * this->frame_length_ * 1.1f;
 
   if (this->cs_pin_ != nullptr) {
@@ -239,6 +237,8 @@ void LinBusListener::read_lin_frame_() {
       this->read_byte(&buf);
       this->current_data_[this->current_data_count_] = buf;
       this->current_data_count_++;
+      // Update timestamp after each byte so timeout is per-byte, not per-frame
+      this->last_data_recieved_ = micros();
 
       if (this->current_data_count_ >= sizeof(this->current_data_)) {
         this->current_state_ = READ_STATE_ACT;
