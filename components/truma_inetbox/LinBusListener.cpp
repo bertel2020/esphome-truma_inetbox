@@ -90,17 +90,24 @@ void LinBusListener::write_lin_answer_(const uint8_t *data, uint8_t len) {
 
   if (!this->observer_mode_) {
     this->current_PID_order_answered_ = true;
-    this->write_array(data, len);
-    this->write(data_CRC);
-    // Wait for TX to complete and echo bytes to arrive.
-    // At 9600 baud: 1 byte = ~1.04ms, 9 bytes = ~9.4ms
-    this->flush();
-    delayMicroseconds((uint32_t)(this->time_per_baud_ * this->frame_length_ * (len + 2) * 1.2f));
-    // Discard exactly the echo bytes of our own transmission (len data + 1 CRC)
-    uint8_t discard_buf;
-    for (uint8_t i = 0; i < (len + 1) && this->available(); i++) {
-      this->read_byte(&discard_buf);
+    // Send each byte and immediately read back the echo on the single-wire LIN bus.
+    // danielfett: serial.write(data) + serial.reset_input_buffer()
+    // We read back echo bytes one by one to avoid blocking the loop.
+    uint8_t echo;
+    for (uint8_t i = 0; i < len; i++) {
+      this->write(data[i]);
+      this->flush();
+      // Read back echo of this byte
+      uint32_t t = micros();
+      while (!this->available() && (micros() - t) < (uint32_t)(this->time_per_baud_ * this->frame_length_ * 2)) {}
+      if (this->available()) this->read_byte(&echo);
     }
+    // Send and discard CRC echo
+    this->write(data_CRC);
+    this->flush();
+    uint32_t t = micros();
+    while (!this->available() && (micros() - t) < (uint32_t)(this->time_per_baud_ * this->frame_length_ * 2)) {}
+    if (this->available()) this->read_byte(&echo);
   }
 
   log_msg.type = QUEUE_LOG_MSG_TYPE::VERBOSE_LIN_ANSWER_RESPONSE;
