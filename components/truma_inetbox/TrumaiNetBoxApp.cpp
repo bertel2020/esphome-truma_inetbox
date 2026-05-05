@@ -1,5 +1,5 @@
 #include "TrumaiNetBoxApp.h"
-#include "esphome/components/truma_inetbox/text_sensor/TrumaTextSensor.h"
+#include "esphome-truma_inetbox/components/truma_inetbox/text_sensor/TrumaTextSensor.h"
 
 // Inline TrumaiNetBoxAppDisplay implementation
 namespace esphome {
