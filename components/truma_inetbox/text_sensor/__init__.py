@@ -16,6 +16,14 @@ CONF_SUPPORTED_TYPE = {
         CONF_CLASS: TRUMA_TEXT_SENSOR_TYPE_dummy_ns.CLOCK,
         CONF_ICON: "mdi:clock-outline",
     },
+    "UPDATE_STATUS": {
+        CONF_CLASS: TRUMA_TEXT_SENSOR_TYPE_dummy_ns.UPDATE_STATUS,
+        CONF_ICON: "mdi:update",
+    },
+    "CP_PLUS_STATUS": {
+        CONF_CLASS: TRUMA_TEXT_SENSOR_TYPE_dummy_ns.CP_PLUS_STATUS,
+        CONF_ICON: "mdi:connection",
+    },
 }
 
 
@@ -41,5 +49,9 @@ async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
     await text_sensor.register_text_sensor(var, config)
+    parent = await cg.get_variable(config[CONF_TRUMA_INETBOX_ID])
     await cg.register_parented(var, config[CONF_TRUMA_INETBOX_ID])
     cg.add(var.set_type(CONF_SUPPORTED_TYPE[config[CONF_TYPE]][CONF_CLASS]))
+    # Register for update_status polling (UPDATE_STATUS and CP_PLUS_STATUS)
+    if config[CONF_TYPE] in ["UPDATE_STATUS", "CP_PLUS_STATUS"]:
+        cg.add(parent.register_text_sensor(var))
