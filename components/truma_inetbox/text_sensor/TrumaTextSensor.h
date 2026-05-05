@@ -16,6 +16,7 @@ enum class TRUMA_TEXT_SENSOR_TYPE {
   HEATING_STATUS,
   HEATING_STATUS_2,
   OPERATING_STATUS,
+  HEATING_MODE,
 };
 
 #ifdef ESPHOME_LOG_HAS_CONFIG
@@ -28,6 +29,7 @@ static const char *enum_to_c_str(const TRUMA_TEXT_SENSOR_TYPE val) {
     case TRUMA_TEXT_SENSOR_TYPE::HEATING_STATUS:         return "HEATING_STATUS";
     case TRUMA_TEXT_SENSOR_TYPE::HEATING_STATUS_2:       return "HEATING_STATUS_2";
     case TRUMA_TEXT_SENSOR_TYPE::OPERATING_STATUS:       return "OPERATING_STATUS";
+    case TRUMA_TEXT_SENSOR_TYPE::HEATING_MODE:           return "HEATING_MODE";
     default: return "";
   }
 }
