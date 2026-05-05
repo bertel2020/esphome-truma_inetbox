@@ -161,22 +161,20 @@ void LinBusListener::read_lin_frame_() {
         if (this->current_data_count_ < 8) {
           log_msg.current_PID = this->current_PID_;
           if (this->current_PID_order_answered_) {
-            // ESP answered this PID — master sent no data back, which is normal for slave-response frames.
-            // Log as VERBOSE instead of ERROR to avoid log spam.
+            // ESP answered — master sent no data back (normal for slave-response frames)
             log_msg.type = QUEUE_LOG_MSG_TYPE::ERROR_READ_LIN_FRAME_UNABLE_TO_ANSWER;
+            TRUMA_LOGV_ISR(log_msg);
+          } else if (this->current_PID_ == DIAGNOSTIC_FRAME_SLAVE) {
+            // 0x3D not answered (queue empty) — reading passively, this is normal
+            log_msg.type = QUEUE_LOG_MSG_TYPE::ERROR_READ_LIN_FRAME_LOST_MSG;
+            TRUMA_LOGV_ISR(log_msg);
           } else {
             log_msg.type = QUEUE_LOG_MSG_TYPE::ERROR_READ_LIN_FRAME_LOST_MSG;
             for (uint8_t i = 0; i < this->current_data_count_; i++) {
               log_msg.data[i] = this->current_data_[i];
             }
             log_msg.len = this->current_data_count_;
-          }
-          // Only log as error if ESP did NOT answer (true lost message).
-          // If ESP answered, this is expected behaviour for slave-response PIDs (0x18, 0x3D).
-          if (!this->current_PID_order_answered_) {
             TRUMA_LOGE_ISR(log_msg);
-          } else {
-            TRUMA_LOGV_ISR(log_msg);
           }
         }
       }
