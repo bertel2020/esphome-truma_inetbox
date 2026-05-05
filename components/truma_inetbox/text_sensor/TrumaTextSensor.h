@@ -12,14 +12,20 @@ enum class TRUMA_TEXT_SENSOR_TYPE {
   CLOCK,
   UPDATE_STATUS,
   CP_PLUS_STATUS,
+  CP_PLUS_DISPLAY_STATUS,
+  HEATING_STATUS,
+  HEATING_STATUS_2,
 };
 
 #ifdef ESPHOME_LOG_HAS_CONFIG
 static const char *enum_to_c_str(const TRUMA_TEXT_SENSOR_TYPE val) {
   switch (val) {
-    case TRUMA_TEXT_SENSOR_TYPE::CLOCK:          return "CLOCK";
-    case TRUMA_TEXT_SENSOR_TYPE::UPDATE_STATUS:  return "UPDATE_STATUS";
-    case TRUMA_TEXT_SENSOR_TYPE::CP_PLUS_STATUS: return "CP_PLUS_STATUS";
+    case TRUMA_TEXT_SENSOR_TYPE::CLOCK:                  return "CLOCK";
+    case TRUMA_TEXT_SENSOR_TYPE::UPDATE_STATUS:          return "UPDATE_STATUS";
+    case TRUMA_TEXT_SENSOR_TYPE::CP_PLUS_STATUS:         return "CP_PLUS_STATUS";
+    case TRUMA_TEXT_SENSOR_TYPE::CP_PLUS_DISPLAY_STATUS: return "CP_PLUS_DISPLAY_STATUS";
+    case TRUMA_TEXT_SENSOR_TYPE::HEATING_STATUS:         return "HEATING_STATUS";
+    case TRUMA_TEXT_SENSOR_TYPE::HEATING_STATUS_2:       return "HEATING_STATUS_2";
     default: return "";
   }
 }
