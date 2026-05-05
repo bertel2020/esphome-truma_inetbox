@@ -225,27 +225,26 @@ void LinBusListener::read_lin_frame_() {
         this->can_write_lin_answer_ = false;
       }
 
+      this->last_data_recieved_ = micros();  // Timeout ab jetzt für erste Datenbyte
       this->current_state_ = READ_STATE_DATA;
       break;
 
     case READ_STATE_DATA: {
-      // Blockend alle 8 Datenbytes + 1 Checksum-Byte lesen.
-      // vTaskDelay(1) gibt dem FreeRTOS UART-Task Zeit den Buffer zu füllen.
-      auto deadline = micros() + this->time_per_first_byte_;
-      while (this->current_data_count_ < sizeof(this->current_data_)) {
-        if (!this->available()) {
-          if (micros() > deadline) {
-            this->current_state_ = READ_STATE_BREAK;
-            return;
-          }
-          vTaskDelay(1);  // yield to UART task
-          continue;
-        }
-        this->read_byte(&buf);
-        this->current_data_[this->current_data_count_++] = buf;
-        deadline = micros() + this->time_per_byte_;
+      auto current = micros();
+      if (current > (this->last_data_recieved_ + this->time_per_first_byte_)) {
+        this->current_state_ = READ_STATE_BREAK;
+        return;
       }
-      this->current_state_ = READ_STATE_ACT;
+      if (!this->available()) {
+        return;  // Kein Byte verfügbar, nächster loop()-Aufruf versucht es erneut
+      }
+      this->read_byte(&buf);
+      this->current_data_[this->current_data_count_++] = buf;
+      this->last_data_recieved_ = micros();  // Timeout nach jedem Byte zurücksetzen
+
+      if (this->current_data_count_ >= sizeof(this->current_data_)) {
+        this->current_state_ = READ_STATE_ACT;
+      }
       break;
     }
 
