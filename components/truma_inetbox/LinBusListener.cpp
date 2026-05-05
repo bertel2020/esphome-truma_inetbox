@@ -92,6 +92,11 @@ void LinBusListener::write_lin_answer_(const uint8_t *data, uint8_t len) {
     this->current_PID_order_answered_ = true;
     this->write_array(data, len);
     this->write(data_CRC);
+    // Flush RX buffer to discard echo of our own transmission.
+    // On single-wire LIN bus, TX bytes are looped back into RX.
+    // danielfett does: serial.reset_input_buffer() after writing.
+    this->flush();
+    this->clear_uart_buffer_();
   }
 
   log_msg.type = QUEUE_LOG_MSG_TYPE::VERBOSE_LIN_ANSWER_RESPONSE;
