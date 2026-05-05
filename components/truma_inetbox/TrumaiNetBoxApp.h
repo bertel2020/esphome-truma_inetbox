@@ -21,7 +21,7 @@ namespace truma_inetbox {
 class TrumaiNetBoxApp;
 
 #define LIN_PID_TRUMA_INET_BOX   0x18
-#define LIN_PID_CP_PLUS_STATUS_2 0x22  // CP Plus Display + Heating Status (PID 0x22)
+#define LIN_PID_CP_PLUS_STATUS_2 0x22
 
 class TrumaiNetBoxApp : public LinBusProtocol {
  public:
@@ -79,7 +79,6 @@ class TrumaiNetBoxApp : public LinBusProtocol {
   bool lin_read_field_by_identifier_(uint8_t identifier, std::array<uint8_t, 5> *response) override;
   const uint8_t *lin_multiframe_recieved(const uint8_t *message, const uint8_t message_len,
                                           uint8_t *return_len) override;
-  // Intercepts PID 0x22 (CP Plus Display + Heating Status) before base class
   void lin_message_recieved_(const uint8_t pid, const uint8_t *message, uint8_t length) override;
   bool has_update_to_submit_();
 };
