@@ -150,7 +150,7 @@ bool LinBusListener::check_for_lin_fault_() {
 }
 
 void LinBusListener::on_receive_() {
-  while (this->available()) {
+  do {
     const uint32_t now = micros();
 
     if (this->last_data_recieved_ != 0 &&
@@ -159,9 +159,13 @@ void LinBusListener::on_receive_() {
       this->current_state_ = READ_STATE_BREAK;
     }
 
+    if (!this->available() && this->current_state_ != READ_STATE_DATA && this->current_state_ != READ_STATE_ACT) {
+      break;
+    }
+
     this->read_lin_frame_();
     this->last_data_recieved_ = micros();
-  }
+  } while (this->available() || this->current_state_ == READ_STATE_DATA || this->current_state_ == READ_STATE_ACT);
 }
 
 void LinBusListener::read_lin_frame_() {
