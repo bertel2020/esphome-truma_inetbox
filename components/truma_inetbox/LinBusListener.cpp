@@ -164,8 +164,12 @@ void LinBusListener::on_receive_() {
     }
 
     this->read_lin_frame_();
-    this->last_data_recieved_ = micros();
-  } while (this->available() || this->current_state_ == READ_STATE_DATA || this->current_state_ == READ_STATE_ACT);
+
+    // After delay in READ_STATE_DATA with no bytes, exit and let loop() retry
+    if (this->current_state_ == READ_STATE_DATA && !this->available()) {
+      break;
+    }
+  } while (this->available() || this->current_state_ == READ_STATE_ACT);
 }
 
 void LinBusListener::read_lin_frame_() {
