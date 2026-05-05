@@ -27,15 +27,17 @@ void LinBusProtocol::lin_reset_device(){
 }
 
 bool LinBusProtocol::answer_lin_order_(const uint8_t pid) {
-  if (pid == DIAGNOSTIC_FRAME_SLAVE) {
+  // PID 0x3D, 0x21, 0x22: all are response slots used by CP Plus to request
+  // frames from the ESP during a multi-frame upload (BA protocol).
+  // 0x3D = first frame, 0x21/0x22 = consecutive frames.
+  if (pid == DIAGNOSTIC_FRAME_SLAVE || pid == 0x21 || pid == 0x22) {
     if (!this->updates_to_send_.empty()) {
       auto update_to_send_ = this->updates_to_send_.front();
       this->updates_to_send_.pop();
       this->write_lin_answer_(update_to_send_.data(), (uint8_t) update_to_send_.size());
       return true;
     }
-    // Queue empty: do NOT answer, let CP Plus send data passively
-    // (same behaviour as danielfett/inetbox.py which only answers when response_waiting())
+    // Queue empty: do NOT answer, read passively
     return false;
   }
   return false;
