@@ -229,15 +229,20 @@ void LinBusListener::read_lin_frame_() {
       break;
 
     case READ_STATE_DATA: {
-      auto current = micros();
-      if (current > (this->last_data_recieved_ + this->time_per_first_byte_)) {
-        this->current_state_ = READ_STATE_BREAK;
-        return;
+      // Wait for byte to be available with timeout
+      // This handles the case where loop() is called between bytes of a frame
+      auto deadline = micros() + this->time_per_first_byte_;
+      while (!this->available()) {
+        if (micros() > deadline) {
+          this->current_state_ = READ_STATE_BREAK;
+          return;
+        }
+        delayMicroseconds(10);
       }
       this->read_byte(&buf);
       this->current_data_[this->current_data_count_] = buf;
       this->current_data_count_++;
-      // Update timestamp after each byte so timeout is per-byte, not per-frame
+      // Update timestamp after each byte
       this->last_data_recieved_ = micros();
 
       if (this->current_data_count_ >= sizeof(this->current_data_)) {
