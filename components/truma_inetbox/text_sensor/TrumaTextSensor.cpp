@@ -18,8 +18,11 @@ void TrumaTextSensor::setup() {
     this->publish_state(buf);
   });
 
-  // UPDATE_STATUS und CP_PLUS_STATUS werden in update_status() gepollt
-  // da sie auf internem App-State basieren, nicht auf Frame-Callbacks
+  // UPDATE_STATUS und CP_PLUS_STATUS werden via Callback bei jedem update() gepollt
+  if (this->type_ == TRUMA_TEXT_SENSOR_TYPE::UPDATE_STATUS ||
+      this->type_ == TRUMA_TEXT_SENSOR_TYPE::CP_PLUS_STATUS) {
+    this->parent_->add_on_update_callback([this]() { this->update_status(); });
+  }
 }
 
 void TrumaTextSensor::update_status() {
