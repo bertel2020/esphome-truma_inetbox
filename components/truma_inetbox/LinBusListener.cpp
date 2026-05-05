@@ -2,6 +2,9 @@
 #include "esphome/core/helpers.h"
 #include "esphome/core/log.h"
 #include "helpers.h"
+#ifdef USE_ESP32
+#include <esp_rom_sys.h>
+#endif
 
 namespace esphome {
 namespace truma_inetbox {
@@ -247,7 +250,7 @@ void LinBusListener::read_lin_frame_() {
         // Busy-wait a short time before returning to loop() 
         // This avoids FreeRTOS preemption between bytes of a frame.
         // ets_delay_us() does NOT yield to other tasks (unlike vTaskDelay).
-        ets_delay_us(200);
+        esp_rom_delay_us(200);
         return;
       }
       this->read_byte(&buf);
