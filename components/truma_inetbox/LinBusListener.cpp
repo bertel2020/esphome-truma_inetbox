@@ -58,7 +58,7 @@ void LinBusListener::update() { this->check_for_lin_fault_(); }
 
 void LinBusListener::loop() {
   if (!this->check_for_lin_fault_()) {
-    if (this->available() > 0 || this->current_state_ == READ_STATE_DATA) {
+    if (this->available() > 0) {
       this->on_receive_();
     }
   }
@@ -150,26 +150,17 @@ bool LinBusListener::check_for_lin_fault_() {
 }
 
 void LinBusListener::on_receive_() {
-  do {
+  while (this->available()) {
     const uint32_t now = micros();
 
     if (this->last_data_recieved_ != 0 &&
-        (now - this->last_data_recieved_) > this->time_per_lin_break_ &&
-        this->current_state_ != READ_STATE_ACT) {
+        (now - this->last_data_recieved_) > this->time_per_lin_break_) {
       this->current_state_ = READ_STATE_BREAK;
     }
 
-    if (!this->available() && this->current_state_ != READ_STATE_DATA && this->current_state_ != READ_STATE_ACT) {
-      break;
-    }
-
     this->read_lin_frame_();
-
-    // After delay in READ_STATE_DATA with no bytes, exit and let loop() retry
-    if (this->current_state_ == READ_STATE_DATA && !this->available()) {
-      break;
-    }
-  } while (this->available() || this->current_state_ == READ_STATE_ACT);
+    this->last_data_recieved_ = micros();
+  }
 }
 
 void LinBusListener::read_lin_frame_() {
@@ -252,12 +243,7 @@ void LinBusListener::read_lin_frame_() {
     case READ_STATE_DATA: {
       auto current = micros();
       if (current > (this->last_data_recieved_ + this->time_per_first_byte_)) {
-        // Timeout: process if we have at least 2 bytes (1 data + 1 CRC)
-        if (this->current_data_count_ >= 2) {
-          this->current_state_ = READ_STATE_ACT;
-        } else {
-          this->current_state_ = READ_STATE_BREAK;
-        }
+        this->current_state_ = READ_STATE_BREAK;
         return;
       }
       if (!this->available()) {
