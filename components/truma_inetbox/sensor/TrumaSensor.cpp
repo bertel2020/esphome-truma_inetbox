@@ -27,7 +27,13 @@ void TrumaSensor::setup() {
       case TRUMA_SENSOR_TYPE::OPERATING_STATUS:
         this->publish_state(static_cast<float>(h->operating_status)); break;
       case TRUMA_SENSOR_TYPE::HEATER_ERROR_CODE:
-        this->publish_state(h->error_code_high * 100.0f + h->error_code_low); break;
+        // 0xFF = no error (initial/unset value), 0x00 = no error
+        if (h->error_code_low == 0xFF && h->error_code_high == 0x00) {
+          this->publish_state(0.0f);
+        } else {
+          this->publish_state(h->error_code_high * 100.0f + h->error_code_low);
+        }
+        break;
       default: break;
     }
   });
@@ -57,8 +63,8 @@ void TrumaSensor::setup() {
     }
   });
 
-  // CP_PLUS_DISPLAY_STATUS und HEATING_STATUS kommen aus PID 0x22
-  // Source: danielfett/inetbox.py parse_status_2
+  // CP_PLUS_DISPLAY_STATUS und HEATING_STATUS aus PID 0x22
+  // Quelle: danielfett/inetbox.py parse_status_2
   this->parent_->get_display()->add_on_message_callback([this](const StatusFrameDisplay *d) {
     switch (this->type_) {
       case TRUMA_SENSOR_TYPE::CP_PLUS_DISPLAY_STATUS:
