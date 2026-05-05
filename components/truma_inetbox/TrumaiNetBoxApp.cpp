@@ -1,4 +1,5 @@
 #include "TrumaiNetBoxApp.h"
+#include "esphome/components/truma_inetbox/text_sensor/TrumaTextSensor.h"
 
 // Inline TrumaiNetBoxAppDisplay implementation
 namespace esphome {
@@ -54,6 +55,11 @@ void TrumaiNetBoxApp::update() {
   this->display_.update();
   this->heater_.update();
   this->timer_.update();
+
+  // Poll update_status und cp_plus_status text sensors
+  for (auto *sensor : this->text_sensors_) {
+    sensor->update_status();
+  }
 
   LinBusProtocol::update();
 
