@@ -15,6 +15,9 @@
 #include "esphome/components/time/real_time_clock.h"
 #endif  // USE_TIME
 
+// Forward declaration for update_status polling
+namespace esphome { namespace truma_inetbox { class TrumaTextSensor; } }
+
 namespace esphome {
 namespace truma_inetbox {
 
@@ -44,6 +47,8 @@ class TrumaiNetBoxApp : public LinBusProtocol {
   TrumaiNetBoxAppTimer        *get_timer()          { return &this->timer_; }
 
   int64_t get_last_cp_plus_request() { return this->device_registered_; }
+  bool has_pending_updates() { return !this->updates_to_send_.empty(); }
+  void register_text_sensor(TrumaTextSensor *sensor) { this->text_sensors_.push_back(sensor); }
 
 #ifdef USE_TIME
   void set_time(time::RealTimeClock *time) { time_ = time; }
@@ -81,6 +86,7 @@ class TrumaiNetBoxApp : public LinBusProtocol {
                                           uint8_t *return_len) override;
   void lin_message_recieved_(const uint8_t pid, const uint8_t *message, uint8_t length) override;
   bool has_update_to_submit_();
+  std::vector<TrumaTextSensor *> text_sensors_;
 };
 
 }  // namespace truma_inetbox
