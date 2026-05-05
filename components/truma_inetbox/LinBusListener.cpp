@@ -92,11 +92,15 @@ void LinBusListener::write_lin_answer_(const uint8_t *data, uint8_t len) {
     this->current_PID_order_answered_ = true;
     this->write_array(data, len);
     this->write(data_CRC);
-    // Flush RX buffer to discard echo of our own transmission.
-    // On single-wire LIN bus, TX bytes are looped back into RX.
-    // danielfett does: serial.reset_input_buffer() after writing.
+    // Wait for TX to complete and echo bytes to arrive.
+    // At 9600 baud: 1 byte = ~1.04ms, 9 bytes = ~9.4ms
     this->flush();
-    this->clear_uart_buffer_();
+    delayMicroseconds((uint32_t)(this->time_per_baud_ * this->frame_length_ * (len + 2) * 1.2f));
+    // Discard exactly the echo bytes of our own transmission (len data + 1 CRC)
+    uint8_t discard_buf;
+    for (uint8_t i = 0; i < (len + 1) && this->available(); i++) {
+      this->read_byte(&discard_buf);
+    }
   }
 
   log_msg.type = QUEUE_LOG_MSG_TYPE::VERBOSE_LIN_ANSWER_RESPONSE;
