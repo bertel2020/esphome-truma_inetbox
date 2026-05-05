@@ -55,7 +55,7 @@ void LinBusListener::update() { this->check_for_lin_fault_(); }
 
 void LinBusListener::loop() {
   if (!this->check_for_lin_fault_()) {
-    if (this->available() > 0) {
+    if (this->available() > 0 || this->current_state_ == READ_STATE_DATA) {
       this->on_receive_();
     }
   }
