@@ -58,7 +58,7 @@ void LinBusListener::update() { this->check_for_lin_fault_(); }
 
 void LinBusListener::loop() {
   if (!this->check_for_lin_fault_()) {
-    if (this->available() > 0 || this->current_state_ == READ_STATE_DATA) {
+    if (this->available() > 0) {
       this->on_receive_();
     }
   }
@@ -150,25 +150,36 @@ bool LinBusListener::check_for_lin_fault_() {
 }
 
 void LinBusListener::on_receive_() {
-  while (this->available() || this->current_state_ == READ_STATE_DATA) {
-    const uint32_t now = micros();
+  // Read all available bytes. After each byte in DATA state, wait briefly
+  // to allow remaining frame bytes to arrive before returning to loop().
+  while (true) {
+    if (!this->available()) {
+      if (this->current_state_ == READ_STATE_DATA && this->current_data_count_ > 0) {
+        // Wait for next byte — up to time_per_first_byte_ total
+        auto elapsed = micros() - this->last_data_recieved_;
+        if (elapsed < this->time_per_first_byte_) {
+          esp_rom_delay_us(200);
+          continue;
+        }
+        // Timeout: process partial frame if we have at least 2 bytes
+        if (this->current_data_count_ >= 2) {
+          this->current_state_ = READ_STATE_ACT;
+          this->read_lin_frame_();
+        } else {
+          this->current_state_ = READ_STATE_BREAK;
+        }
+      }
+      break;
+    }
 
+    const uint32_t now = micros();
     if (this->last_data_recieved_ != 0 &&
         (now - this->last_data_recieved_) > this->time_per_lin_break_) {
       this->current_state_ = READ_STATE_BREAK;
     }
 
-    bool had_data = this->available();
     this->read_lin_frame_();
-    // Only update timestamp when a byte was consumed, not on empty-wait
-    if (had_data) {
-      this->last_data_recieved_ = micros();
-    }
-
-    // If still in DATA state but no bytes available, exit and let next loop() call retry
-    if (this->current_state_ == READ_STATE_DATA && !this->available()) {
-      break;
-    }
+    this->last_data_recieved_ = micros();
   }
 }
 
@@ -250,18 +261,7 @@ void LinBusListener::read_lin_frame_() {
       break;
 
     case READ_STATE_DATA: {
-      auto current = micros();
-      if (current > (this->last_data_recieved_ + this->time_per_first_byte_)) {
-        // Timeout — process frame if we have at least 2 bytes (1 data + 1 CRC)
-        if (this->current_data_count_ >= 2) {
-          this->current_state_ = READ_STATE_ACT;
-        } else {
-          this->current_state_ = READ_STATE_BREAK;
-        }
-        return;
-      }
       if (!this->available()) {
-        esp_rom_delay_us(200);
         return;
       }
       this->read_byte(&buf);
