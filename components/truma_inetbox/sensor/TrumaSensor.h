@@ -26,6 +26,8 @@ enum class TRUMA_SENSOR_TYPE {
   CLOCK_MINUTE,
   CP_PLUS_DISPLAY_STATUS,
   HEATING_STATUS,
+  HEATING_STATUS_2,
+  CP_PLUS_VOLTAGE,
 };
 
 #ifdef ESPHOME_LOG_HAS_CONFIG
@@ -44,6 +46,8 @@ static const char *enum_to_c_str(const TRUMA_SENSOR_TYPE val) {
     case TRUMA_SENSOR_TYPE::CLOCK_MINUTE:              return "CLOCK_MINUTE";
     case TRUMA_SENSOR_TYPE::CP_PLUS_DISPLAY_STATUS:    return "CP_PLUS_DISPLAY_STATUS";
     case TRUMA_SENSOR_TYPE::HEATING_STATUS:            return "HEATING_STATUS";
+    case TRUMA_SENSOR_TYPE::HEATING_STATUS_2:          return "HEATING_STATUS_2";
+    case TRUMA_SENSOR_TYPE::CP_PLUS_VOLTAGE:           return "CP_PLUS_VOLTAGE";
     default:                                           return "";
   }
 }
