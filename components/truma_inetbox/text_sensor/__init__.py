@@ -24,6 +24,18 @@ CONF_SUPPORTED_TYPE = {
         CONF_CLASS: TRUMA_TEXT_SENSOR_TYPE_dummy_ns.CP_PLUS_STATUS,
         CONF_ICON: "mdi:connection",
     },
+    "CP_PLUS_DISPLAY_STATUS": {
+        CONF_CLASS: TRUMA_TEXT_SENSOR_TYPE_dummy_ns.CP_PLUS_DISPLAY_STATUS,
+        CONF_ICON: "mdi:television",
+    },
+    "HEATING_STATUS": {
+        CONF_CLASS: TRUMA_TEXT_SENSOR_TYPE_dummy_ns.HEATING_STATUS,
+        CONF_ICON: "mdi:water-boiler",
+    },
+    "HEATING_STATUS_2": {
+        CONF_CLASS: TRUMA_TEXT_SENSOR_TYPE_dummy_ns.HEATING_STATUS_2,
+        CONF_ICON: "mdi:water-boiler",
+    },
 }
 
 
