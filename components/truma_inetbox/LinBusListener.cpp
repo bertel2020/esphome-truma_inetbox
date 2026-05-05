@@ -243,13 +243,15 @@ void LinBusListener::read_lin_frame_() {
     case READ_STATE_DATA: {
       auto current = micros();
       if (current > (this->last_data_recieved_ + this->time_per_first_byte_)) {
-        this->current_state_ = READ_STATE_BREAK;
+        // Timeout: process if we have at least 2 bytes (1 data + 1 CRC)
+        if (this->current_data_count_ >= 2) {
+          this->current_state_ = READ_STATE_ACT;
+        } else {
+          this->current_state_ = READ_STATE_BREAK;
+        }
         return;
       }
       if (!this->available()) {
-        // Busy-wait a short time before returning to loop() 
-        // This avoids FreeRTOS preemption between bytes of a frame.
-        // ets_delay_us() does NOT yield to other tasks (unlike vTaskDelay).
         esp_rom_delay_us(200);
         return;
       }
