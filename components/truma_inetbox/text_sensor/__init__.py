@@ -40,6 +40,10 @@ CONF_SUPPORTED_TYPE = {
         CONF_CLASS: TRUMA_TEXT_SENSOR_TYPE_dummy_ns.OPERATING_STATUS,
         CONF_ICON: "mdi:power",
     },
+    "HEATING_MODE": {
+        CONF_CLASS: TRUMA_TEXT_SENSOR_TYPE_dummy_ns.HEATING_MODE,
+        CONF_ICON: "mdi:fire",
+    },
 }
 
 
