@@ -65,6 +65,10 @@ void TrumaHeaterSelect::setup() {
         break;
 
       case TRUMA_SELECT_TYPE::HEATER_FAN_ONLY_SPEED:
+        // Only update when in fan only mode (target_temp == OFF)
+        if (status->target_temp_room != TargetTemp::TARGET_TEMP_OFF) {
+          break;
+        }
         switch (status->heating_mode) {
           case HeatingMode::HEATING_MODE_VENT_1:
             this->publish_state(this->at((size_t) TRUMA_SELECT_TYPE_HEATER_FAN_ONLY_SPEED::VENT_1).value());
