@@ -21,7 +21,9 @@ namespace esphome {
     void set_visual_temperature_step(float value) { this->visual_temperature_step_ = value; }
 
     void set_supported_modes(const std::set<climate::ClimateMode> &modes);
-    void set_supported_fan_modes(const std::set<climate::ClimateFanMode> &fan_modes);
+    void add_supported_fan_mode(climate::ClimateFanMode fan_mode) {
+      this->supported_fan_modes_.insert(fan_mode);
+    }
 
    protected:
     std::set<esphome::climate::ClimateMode> supported_modes_;
