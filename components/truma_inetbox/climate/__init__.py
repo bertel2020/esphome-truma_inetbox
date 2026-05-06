@@ -13,6 +13,7 @@ from esphome.const import (
 )
 from esphome.components.climate import (
     ClimateMode,
+    ClimateFanMode,
 )
 
 CLIMATE_MODES = {
@@ -20,6 +21,20 @@ CLIMATE_MODES = {
     "HEAT": ClimateMode.CLIMATE_MODE_HEAT,
     "AUTO": ClimateMode.CLIMATE_MODE_AUTO,
 }
+
+CLIMATE_FAN_MODES = {
+    "OFF":    ClimateFanMode.CLIMATE_FAN_OFF,
+    "LOW":    ClimateFanMode.CLIMATE_FAN_LOW,
+    "HIGH":   ClimateFanMode.CLIMATE_FAN_HIGH,
+}
+
+CLIMATE_VISUAL_SCHEMA = cv.Schema({
+    cv.Optional(CONF_TARGET_TEMPERATURE, default={}): cv.Schema({
+        cv.Optional(CONF_MIN_TEMPERATURE, default=5.0): cv.float_,
+        cv.Optional(CONF_MAX_TEMPERATURE, default=30.0): cv.float_,
+        cv.Optional(CONF_TEMPERATURE_STEP, default=0.5): cv.float_,
+    })
+})
 
 from .. import truma_inetbox_ns, CONF_TRUMA_INETBOX_ID, TrumaINetBoxApp
 
@@ -52,6 +67,9 @@ CONFIG_SCHEMA = climate._CLIMATE_SCHEMA.extend(
         cv.Optional("supported_modes", default=["OFF", "HEAT"]): cv.ensure_list(
             cv.enum(CLIMATE_MODES, upper=True)
         ),
+        cv.Optional("supported_fan_modes", default=["OFF", "LOW", "HIGH"]): cv.ensure_list(
+            cv.enum(CLIMATE_FAN_MODES, upper=True)
+        ),
     })
 ).extend(cv.COMPONENT_SCHEMA)
 
@@ -67,3 +85,7 @@ async def to_code(config):
     if "supported_modes" in config:
         modes = [CLIMATE_MODES[m] for m in config["supported_modes"]]
         cg.add(var.set_supported_modes(modes))
+
+    if "supported_fan_modes" in config:
+        fan_modes = [CLIMATE_FAN_MODES[m] for m in config["supported_fan_modes"]]
+        cg.add(var.set_supported_fan_modes(fan_modes))
