@@ -28,7 +28,7 @@ CONF_SUPPORTED_TYPE = {
         CONF_CLASS: truma_inetbox_ns.class_("TrumaHeaterSelect", select.Select, cg.Component),
         CONF_TYPE: TRUMA_SELECT_TYPE_dummy_ns.HEATER_FAN_MODE,
         CONF_ICON: ICON_THERMOMETER,
-        CONF_OPTIONS: ("Off", "Eco", "High", "Boost"),
+        CONF_OPTIONS: ("Off", "Eco", "High"),
     },
     "HEATER_FAN_MODE_VARIO_HEAT": {
         CONF_CLASS: truma_inetbox_ns.class_("TrumaHeaterSelect", select.Select, cg.Component),
