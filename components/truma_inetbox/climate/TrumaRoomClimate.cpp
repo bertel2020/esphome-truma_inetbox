@@ -90,9 +90,11 @@ climate::ClimateTraits TrumaRoomClimate::traits() {
     traits.add_supported_mode(mode);
   }
 
-  for (auto fan_mode : this->supported_fan_modes_) {
-    traits.add_supported_fan_mode(fan_mode);
-  }
+  traits.set_supported_fan_modes({{
+      climate::CLIMATE_FAN_OFF,
+      climate::CLIMATE_FAN_LOW,
+      climate::CLIMATE_FAN_HIGH,
+  }});
 
   traits.set_visual_min_temperature(5);
   traits.set_visual_max_temperature(30);
