@@ -6,9 +6,9 @@ namespace truma_inetbox {
 
 static const char *const TAG = "truma_inetbox.room_climate";
 
-static const std::string FAN_OFF  = "Off";
-static const std::string FAN_ECO  = "Eco";
-static const std::string FAN_HIGH = "High";
+static const char *const FAN_OFF  = "Off";
+static const char *const FAN_ECO  = "Eco";
+static const char *const FAN_HIGH = "High";
 
 void TrumaRoomClimate::setup() {
   this->parent_->get_heater()->add_on_message_callback([this](const StatusFrameHeater *status_heater) {
@@ -16,17 +16,20 @@ void TrumaRoomClimate::setup() {
     this->current_temperature = temp_code_to_decimal(status_heater->current_temp_room);
     this->mode = std::isnan(this->target_temperature) ? climate::CLIMATE_MODE_OFF : climate::CLIMATE_MODE_HEAT;
 
+    // Set custom fan mode via a call to ensure proper state tracking
+    auto call = this->make_call();
     switch (status_heater->heating_mode) {
       case HeatingMode::HEATING_MODE_ECO:
-        this->custom_fan_mode_ = FAN_ECO.c_str();
+        call.set_custom_fan_mode(FAN_ECO);
         break;
       case HeatingMode::HEATING_MODE_HIGH:
-        this->custom_fan_mode_ = FAN_HIGH.c_str();
+        call.set_custom_fan_mode(FAN_HIGH);
         break;
       default:
-        this->custom_fan_mode_ = FAN_OFF.c_str();
+        call.set_custom_fan_mode(FAN_OFF);
         break;
     }
+    call.perform();
 
     this->publish_state();
   });
@@ -83,8 +86,7 @@ climate::ClimateTraits TrumaRoomClimate::traits() {
     traits.add_supported_mode(mode);
   }
 
-  std::set<std::string> fan_modes = {FAN_OFF, FAN_ECO, FAN_HIGH};
-  traits.set_supported_custom_fan_modes(fan_modes);
+  traits.set_supported_custom_fan_modes({FAN_OFF, FAN_ECO, FAN_HIGH});
 
   traits.set_visual_min_temperature(5);
   traits.set_visual_max_temperature(30);
