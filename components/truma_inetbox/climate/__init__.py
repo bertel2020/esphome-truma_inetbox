@@ -25,6 +25,7 @@ CLIMATE_MODES = {
 CLIMATE_FAN_MODES = {
     "OFF":    ClimateFanMode.CLIMATE_FAN_OFF,
     "LOW":    ClimateFanMode.CLIMATE_FAN_LOW,
+    "MEDIUM": ClimateFanMode.CLIMATE_FAN_MEDIUM,
     "HIGH":   ClimateFanMode.CLIMATE_FAN_HIGH,
 }
 
@@ -86,6 +87,6 @@ async def to_code(config):
         modes = [CLIMATE_MODES[m] for m in config["supported_modes"]]
         cg.add(var.set_supported_modes(modes))
 
-    if "supported_fan_modes" in config:
-        fan_modes = [CLIMATE_FAN_MODES[m] for m in config["supported_fan_modes"]]
-        cg.add(var.set_supported_fan_modes(fan_modes))
+    if "supported_fan_modes" in config and config[CONF_TYPE].upper() == "ROOM":
+        for fan_mode in config["supported_fan_modes"]:
+            cg.add(var.add_supported_fan_mode(CLIMATE_FAN_MODES[fan_mode]))
