@@ -7,6 +7,9 @@ namespace truma_inetbox {
 static const char *const TAG = "truma_inetbox.room_climate";
 
 void TrumaRoomClimate::setup() {
+  // Initialize fan mode to Off
+  this->fan_mode = climate::CLIMATE_FAN_OFF;
+
   this->parent_->get_heater()->add_on_message_callback([this](const StatusFrameHeater *status_heater) {
     this->target_temperature = temp_code_to_decimal(status_heater->target_temp_room);
     this->current_temperature = temp_code_to_decimal(status_heater->current_temp_room);
@@ -83,7 +86,6 @@ void TrumaRoomClimate::control(const climate::ClimateCall &call) {
 climate::ClimateTraits TrumaRoomClimate::traits() {
   auto traits = climate::ClimateTraits();
   traits.add_feature_flags(esphome::climate::CLIMATE_SUPPORTS_CURRENT_TEMPERATURE);
-  traits.add_feature_flags(esphome::climate::CLIMATE_SUPPORTS_FAN_MODE);
 
   for (auto mode : this->supported_modes_) {
     traits.add_supported_mode(mode);
