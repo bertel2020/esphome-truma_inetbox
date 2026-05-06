@@ -84,13 +84,15 @@ void TrumaRoomClimate::control(const climate::ClimateCall &call) {
 
 climate::ClimateTraits TrumaRoomClimate::traits() {
   auto traits = climate::ClimateTraits();
-  traits.set_supports_current_temperature(true);
+  traits.add_feature_flags(esphome::climate::CLIMATE_SUPPORTS_CURRENT_TEMPERATURE);
 
   for (auto mode : this->supported_modes_) {
     traits.add_supported_mode(mode);
   }
 
-  traits.set_supported_fan_modes(this->supported_fan_modes_);
+  for (auto fan_mode : this->supported_fan_modes_) {
+    traits.add_supported_fan_mode(fan_mode);
+  }
 
   traits.set_visual_min_temperature(5);
   traits.set_visual_max_temperature(30);
@@ -100,10 +102,6 @@ climate::ClimateTraits TrumaRoomClimate::traits() {
 
 void TrumaRoomClimate::set_supported_modes(const std::set<climate::ClimateMode> &modes) {
   this->supported_modes_ = modes;
-}
-
-void TrumaRoomClimate::set_supported_fan_modes(const std::set<climate::ClimateFanMode> &fan_modes) {
-  this->supported_fan_modes_ = fan_modes;
 }
 
 }  // namespace truma_inetbox
