@@ -16,9 +16,10 @@ from esphome.components.climate import (
 )
 
 CLIMATE_MODES = {
-    "OFF":  ClimateMode.CLIMATE_MODE_OFF,
-    "HEAT": ClimateMode.CLIMATE_MODE_HEAT,
-    "AUTO": ClimateMode.CLIMATE_MODE_AUTO,
+    "OFF":      ClimateMode.CLIMATE_MODE_OFF,
+    "HEAT":     ClimateMode.CLIMATE_MODE_HEAT,
+    "AUTO":     ClimateMode.CLIMATE_MODE_AUTO,
+    "FAN_ONLY": ClimateMode.CLIMATE_MODE_FAN_ONLY,
 }
 
 from .. import truma_inetbox_ns, CONF_TRUMA_INETBOX_ID, TrumaINetBoxApp
@@ -49,7 +50,7 @@ CONFIG_SCHEMA = climate._CLIMATE_SCHEMA.extend(
         cv.Required(CONF_TYPE): cv.enum(CONF_SUPPORTED_TYPE, upper=True),
         cv.Optional(CONF_NAME, default="Truma Climate"): cv.string,
         cv.Optional("preset"): cv.All(cv.ensure_list(cv.string)),
-        cv.Optional("supported_modes", default=["OFF", "HEAT"]): cv.ensure_list(
+        cv.Optional("supported_modes", default=["OFF", "HEAT", "FAN_ONLY"]): cv.ensure_list(
             cv.enum(CLIMATE_MODES, upper=True)
         ),
     })
