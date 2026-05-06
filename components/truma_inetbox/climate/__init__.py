@@ -39,6 +39,12 @@ CONF_SUPPORTED_TYPE = {
 def set_default_based_on_type():
     def set_defaults_(config):
         config[CONF_ID].type = CONF_SUPPORTED_TYPE[config[CONF_TYPE]]
+        # Set default supported_modes based on type if not explicitly set
+        if "supported_modes" not in config:
+            if config[CONF_TYPE].upper() == "ROOM":
+                config["supported_modes"] = ["OFF", "HEAT", "FAN_ONLY"]
+            else:
+                config["supported_modes"] = ["OFF", "HEAT"]
         return config
     return set_defaults_
 
@@ -50,7 +56,7 @@ CONFIG_SCHEMA = climate._CLIMATE_SCHEMA.extend(
         cv.Required(CONF_TYPE): cv.enum(CONF_SUPPORTED_TYPE, upper=True),
         cv.Optional(CONF_NAME, default="Truma Climate"): cv.string,
         cv.Optional("preset"): cv.All(cv.ensure_list(cv.string)),
-        cv.Optional("supported_modes", default=["OFF", "HEAT", "FAN_ONLY"]): cv.ensure_list(
+        cv.Optional("supported_modes"): cv.ensure_list(
             cv.enum(CLIMATE_MODES, upper=True)
         ),
     })
