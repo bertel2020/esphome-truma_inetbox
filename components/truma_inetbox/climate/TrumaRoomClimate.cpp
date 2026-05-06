@@ -16,26 +16,34 @@ void TrumaRoomClimate::setup() {
     this->current_temperature = temp_code_to_decimal(status_heater->current_temp_room);
 
     switch (status_heater->heating_mode) {
-      case HeatingMode::HEATING_MODE_ECO:
-        this->mode = climate::CLIMATE_MODE_HEAT;
-        this->fan_mode = climate::CLIMATE_FAN_LOW;
+      case HeatingMode::HEATING_MODE_ECO:   // = VENT_1 = 0x01
+        if (status_heater->target_temp_room != TargetTemp::TARGET_TEMP_OFF) {
+          this->mode = climate::CLIMATE_MODE_HEAT;
+          this->fan_mode = climate::CLIMATE_FAN_LOW;
+        } else {
+          this->mode = climate::CLIMATE_MODE_FAN_ONLY;
+          this->fan_mode = climate::CLIMATE_FAN_OFF;
+        }
         break;
-      case HeatingMode::HEATING_MODE_HIGH:
-        this->mode = climate::CLIMATE_MODE_HEAT;
-        this->fan_mode = climate::CLIMATE_FAN_HIGH;
-        break;
-      case HeatingMode::HEATING_MODE_VENT_1:
-      case HeatingMode::HEATING_MODE_VENT_2:
-      case HeatingMode::HEATING_MODE_VENT_3:
-      case HeatingMode::HEATING_MODE_VENT_4:
-      case HeatingMode::HEATING_MODE_VENT_5:
-      case HeatingMode::HEATING_MODE_VENT_6:
-      case HeatingMode::HEATING_MODE_VENT_7:
-      case HeatingMode::HEATING_MODE_VENT_8:
-      case HeatingMode::HEATING_MODE_VENT_9:
-      case HeatingMode::HEATING_MODE_VENT_10:
+      case HeatingMode::HEATING_MODE_VARIO_HEAT_NIGHT:  // VENT_2 = 0x02
+      case HeatingMode::HEATING_MODE_VARIO_HEAT_AUTO:   // VENT_3 = 0x03
+      case HeatingMode::HEATING_MODE_VENT_4:            // 0x04
+      case HeatingMode::HEATING_MODE_VENT_5:            // 0x05
+      case HeatingMode::HEATING_MODE_VENT_6:            // 0x06
+      case HeatingMode::HEATING_MODE_VENT_7:            // 0x07
+      case HeatingMode::HEATING_MODE_VENT_8:            // 0x08
+      case HeatingMode::HEATING_MODE_VENT_9:            // 0x09
         this->mode = climate::CLIMATE_MODE_FAN_ONLY;
         this->fan_mode = climate::CLIMATE_FAN_OFF;
+        break;
+      case HeatingMode::HEATING_MODE_HIGH:  // = VENT_10 = 0x0A
+        if (status_heater->target_temp_room != TargetTemp::TARGET_TEMP_OFF) {
+          this->mode = climate::CLIMATE_MODE_HEAT;
+          this->fan_mode = climate::CLIMATE_FAN_HIGH;
+        } else {
+          this->mode = climate::CLIMATE_MODE_FAN_ONLY;
+          this->fan_mode = climate::CLIMATE_FAN_OFF;
+        }
         break;
       default:
         this->mode = climate::CLIMATE_MODE_OFF;
