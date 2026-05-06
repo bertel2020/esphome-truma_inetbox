@@ -48,12 +48,19 @@ CONF_SUPPORTED_TYPE = {
         CONF_ICON: ICON_THERMOMETER,
         CONF_OPTIONS: ("Diesel", "Mix 1", "Mix 2", "Electric 1", "Electric 2"),
     },
+    "HEATER_FAN_ONLY_SPEED": {
+        CONF_CLASS: truma_inetbox_ns.class_("TrumaHeaterSelect", select.Select, cg.Component),
+        CONF_TYPE: TRUMA_SELECT_TYPE_dummy_ns.HEATER_FAN_ONLY_SPEED,
+        CONF_ICON: "mdi:fan",
+        CONF_OPTIONS: ("AUS", "Stufe 1", "Stufe 2", "Stufe 3", "Stufe 4", "Stufe 5",
+                       "Stufe 6", "Stufe 7", "Stufe 8", "Stufe 9", "Stufe 10"),
+    },
 }
 
 
 def set_default_based_on_type():
     def set_defaults_(config):
-        type_key = config[CONF_TYPE].upper()  # normalize for lookup
+        type_key = config[CONF_TYPE].upper()
         type_data = CONF_SUPPORTED_TYPE[type_key]
 
         config[CONF_ID].type = type_data[CONF_CLASS]
@@ -66,7 +73,6 @@ def set_default_based_on_type():
 
         return config
     return set_defaults_
-
 
 
 SELECT_SCHEMA_BASE = select.select_schema({})
