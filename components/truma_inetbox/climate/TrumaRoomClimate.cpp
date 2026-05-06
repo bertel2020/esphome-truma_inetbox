@@ -8,20 +8,37 @@ static const char *const TAG = "truma_inetbox.room_climate";
 
 void TrumaRoomClimate::setup() {
   this->fan_mode = climate::CLIMATE_FAN_OFF;
+  this->mode = climate::CLIMATE_MODE_OFF;
+  this->publish_state();
 
   this->parent_->get_heater()->add_on_message_callback([this](const StatusFrameHeater *status_heater) {
     this->target_temperature = temp_code_to_decimal(status_heater->target_temp_room);
     this->current_temperature = temp_code_to_decimal(status_heater->current_temp_room);
-    this->mode = std::isnan(this->target_temperature) ? climate::CLIMATE_MODE_OFF : climate::CLIMATE_MODE_HEAT;
 
     switch (status_heater->heating_mode) {
       case HeatingMode::HEATING_MODE_ECO:
+        this->mode = climate::CLIMATE_MODE_HEAT;
         this->fan_mode = climate::CLIMATE_FAN_LOW;
         break;
       case HeatingMode::HEATING_MODE_HIGH:
+        this->mode = climate::CLIMATE_MODE_HEAT;
         this->fan_mode = climate::CLIMATE_FAN_HIGH;
         break;
+      case HeatingMode::HEATING_MODE_VENT_1:
+      case HeatingMode::HEATING_MODE_VENT_2:
+      case HeatingMode::HEATING_MODE_VENT_3:
+      case HeatingMode::HEATING_MODE_VENT_4:
+      case HeatingMode::HEATING_MODE_VENT_5:
+      case HeatingMode::HEATING_MODE_VENT_6:
+      case HeatingMode::HEATING_MODE_VENT_7:
+      case HeatingMode::HEATING_MODE_VENT_8:
+      case HeatingMode::HEATING_MODE_VENT_9:
+      case HeatingMode::HEATING_MODE_VENT_10:
+        this->mode = climate::CLIMATE_MODE_FAN_ONLY;
+        this->fan_mode = climate::CLIMATE_FAN_OFF;
+        break;
       default:
+        this->mode = climate::CLIMATE_MODE_OFF;
         this->fan_mode = climate::CLIMATE_FAN_OFF;
         break;
     }
@@ -44,8 +61,12 @@ void TrumaRoomClimate::control(const climate::ClimateCall &call) {
     switch (mode) {
       case climate::CLIMATE_MODE_HEAT:
         if (status_heater->target_temp_room == TargetTemp::TARGET_TEMP_OFF) {
-          this->parent_->get_heater()->action_heater_room(5);
+          this->parent_->get_heater()->action_heater_room(5, HeatingMode::HEATING_MODE_ECO);
         }
+        break;
+      case climate::CLIMATE_MODE_FAN_ONLY:
+        // Default to vent level 5 — speed can be changed via Fan Only speed sensor
+        this->parent_->get_heater()->action_heater_room(0, HeatingMode::HEATING_MODE_VENT_5);
         break;
       default:
         this->parent_->get_heater()->action_heater_room(0);
