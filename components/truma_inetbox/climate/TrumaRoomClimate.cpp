@@ -17,7 +17,7 @@ void TrumaRoomClimate::setup() {
         this->fan_mode = climate::CLIMATE_FAN_LOW;
         break;
       case HeatingMode::HEATING_MODE_HIGH:
-        this->fan_mode = climate::CLIMATE_FAN_HIGH;
+        this->fan_mode = climate::CLIMATE_FAN_MEDIUM;
         break;
       default:
         this->fan_mode = climate::CLIMATE_FAN_OFF;
@@ -60,7 +60,7 @@ void TrumaRoomClimate::control(const climate::ClimateCall &call) {
     }
     switch (fan_mode) {
       case climate::CLIMATE_FAN_LOW:
-      case climate::CLIMATE_FAN_HIGH:
+      case climate::CLIMATE_FAN_MEDIUM:
         if (temp < 5) temp = 5;
         break;
       default:
@@ -70,7 +70,7 @@ void TrumaRoomClimate::control(const climate::ClimateCall &call) {
       case climate::CLIMATE_FAN_LOW:
         this->parent_->get_heater()->action_heater_room(static_cast<uint8_t>(temp), HeatingMode::HEATING_MODE_ECO);
         break;
-      case climate::CLIMATE_FAN_HIGH:
+      case climate::CLIMATE_FAN_MEDIUM:
         this->parent_->get_heater()->action_heater_room(static_cast<uint8_t>(temp), HeatingMode::HEATING_MODE_HIGH);
         break;
       default:
@@ -83,6 +83,7 @@ void TrumaRoomClimate::control(const climate::ClimateCall &call) {
 climate::ClimateTraits TrumaRoomClimate::traits() {
   auto traits = climate::ClimateTraits();
   traits.add_feature_flags(esphome::climate::CLIMATE_SUPPORTS_CURRENT_TEMPERATURE);
+  traits.add_feature_flags(esphome::climate::CLIMATE_SUPPORTS_FAN_MODE);
 
   for (auto mode : this->supported_modes_) {
     traits.add_supported_mode(mode);
@@ -91,7 +92,7 @@ climate::ClimateTraits TrumaRoomClimate::traits() {
   traits.set_supported_fan_modes({
     climate::CLIMATE_FAN_OFF,
     climate::CLIMATE_FAN_LOW,
-    climate::CLIMATE_FAN_HIGH,
+    climate::CLIMATE_FAN_MEDIUM,
   });
 
   traits.set_visual_min_temperature(5);
