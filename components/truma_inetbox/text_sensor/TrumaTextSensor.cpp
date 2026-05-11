@@ -76,7 +76,7 @@ void TrumaTextSensor::setup() {
       switch (h->operating_status) {
         case OperatingStatus::OPERATING_STATUS_OFF:                s = "Off";        break;
         case OperatingStatus::OPERATING_STATUS_WARNING:            s = "Warning";    break;
-        case OperatingStatus::OPERATING_STATUS_ON_STANDBY:        s = "Standby";    break;
+        case OperatingStatus::OPERATING_STATUS_ON_STANDBY:         s = "Standby";    break;
         case OperatingStatus::OPERATING_STATUS_ON_5:               s = "On";         break;
         case OperatingStatus::OPERATING_STATUS_ON_6:               s = "On";         break;
         case OperatingStatus::OPERATING_STATUS_ON_7:               s = "On";         break;
