@@ -78,7 +78,7 @@ void TrumaRoomClimate::control(const climate::ClimateCall &call) {
         }
         break;
       case climate::CLIMATE_MODE_FAN_ONLY:
-        this->parent_->get_heater()->action_heater_room(0, HeatingMode::HEATING_MODE_VENT_5);
+        this->parent_->get_heater()->action_heater_fan_only(HeatingMode::HEATING_MODE_VENT_5);
         break;
       default:
         this->parent_->get_heater()->action_heater_room(0);
