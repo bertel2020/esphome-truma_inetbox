@@ -39,6 +39,12 @@ CONF_SUPPORTED_TYPE = {
 def set_default_based_on_type():
     def set_defaults_(config):
         config[CONF_ID].type = CONF_SUPPORTED_TYPE[config[CONF_TYPE]]
+        # Set default supported_modes based on type if not explicitly set
+        if "supported_modes" not in config:
+            if config[CONF_TYPE].upper() == "ROOM":
+                config["supported_modes"] = ["OFF", "HEAT", "FAN_ONLY"]
+            else:
+                config["supported_modes"] = ["OFF", "HEAT"]
         return config
     return set_defaults_
 
@@ -50,7 +56,7 @@ CONFIG_SCHEMA = climate._CLIMATE_SCHEMA.extend(
         cv.Required(CONF_TYPE): cv.enum(CONF_SUPPORTED_TYPE, upper=True),
         cv.Optional(CONF_NAME, default="Truma Climate"): cv.string,
         cv.Optional("preset"): cv.All(cv.ensure_list(cv.string)),
-        cv.Optional("supported_modes", default=["OFF", "HEAT", "FAN_ONLY"]): cv.ensure_list(
+        cv.Optional("supported_modes"): cv.ensure_list(
             cv.enum(CLIMATE_MODES, upper=True)
         ),
     })
@@ -66,8 +72,5 @@ async def to_code(config):
     await cg.register_parented(var, config[CONF_TRUMA_INETBOX_ID])
 
     if "supported_modes" in config:
-        modes = config["supported_modes"]
-        # FAN_ONLY only valid for ROOM
-        if config[CONF_TYPE].upper() != "ROOM":
-            modes = [m for m in modes if m != CLIMATE_MODES["FAN_ONLY"]]
+        modes = [CLIMATE_MODES[m] for m in config["supported_modes"]]
         cg.add(var.set_supported_modes(modes))
