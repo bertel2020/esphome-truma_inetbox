@@ -100,11 +100,11 @@ enum class OperatingStatus : uint8_t {
 // CP Plus Display Status (aus StatusFrameClock.display_1)
 // Quelle: danielfett/inetbox.py + mc0110/inetbox2mqtt CP_PLUS_DISPLAY_STATUS_MAPPING
 enum class CpPlusDisplayStatus : uint8_t {
-  CP_PLUS_DISPLAY_STANDBY_AC_OFF = 0x00,
+  CP_PLUS_DISPLAY_OFF_AC_OFF     = 0x00,
   CP_PLUS_DISPLAY_WARNING        = 0x01,
-  CP_PLUS_DISPLAY_STANDBY_AC_ON  = 0x20,
+  CP_PLUS_DISPLAY_OFF_AC_ON      = 0x20,
   CP_PLUS_DISPLAY_BOILER_OFF     = 0x40,
-  CP_PLUS_DISPLAY_BOILER_ON      = 0x50,
+  CP_PLUS_DISPLAY_STANDBY        = 0x50,
   CP_PLUS_DISPLAY_HEATING_ON     = 0xD0,
   CP_PLUS_DISPLAY_ERROR          = 0xF0,
   CP_PLUS_DISPLAY_FATAL_ERROR    = 0x70,
