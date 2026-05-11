@@ -91,13 +91,30 @@ void TrumaTextSensor::setup() {
   if (this->type_ == TRUMA_TEXT_SENSOR_TYPE::HEATING_MODE) {
     this->parent_->get_heater()->add_on_message_callback([this](const StatusFrameHeater *h) {
       const char *s = "Unknown";
+      bool fan_only = (h->target_temp_room == TargetTemp::TARGET_TEMP_OFF);
       switch (h->heating_mode) {
-        case HeatingMode::HEATING_MODE_OFF:               s = "Off";              break;
-        case HeatingMode::HEATING_MODE_ECO:               s = "Eco";              break;
-        case HeatingMode::HEATING_MODE_VARIO_HEAT_NIGHT:  s = "Vario Heat Night"; break;
-        case HeatingMode::HEATING_MODE_VARIO_HEAT_AUTO:   s = "Vario Heat Auto";  break;
-        case HeatingMode::HEATING_MODE_HIGH:              s = "High";             break;
-        case HeatingMode::HEATING_MODE_BOOST:             s = "Boost";            break;
+        case HeatingMode::HEATING_MODE_OFF:
+          s = "Off";
+          break;
+        case HeatingMode::HEATING_MODE_ECO:  // = VENT_1
+          s = fan_only ? "Vent 1" : "Eco";
+          break;
+        case HeatingMode::HEATING_MODE_VARIO_HEAT_NIGHT:  // = VENT_2
+          s = fan_only ? "Vent 2" : "Vario Heat Night";
+          break;
+        case HeatingMode::HEATING_MODE_VARIO_HEAT_AUTO:   // = VENT_3
+          s = fan_only ? "Vent 3" : "Vario Heat Auto";
+          break;
+        case HeatingMode::HEATING_MODE_VENT_4:   s = "Vent 4";  break;
+        case HeatingMode::HEATING_MODE_VENT_5:   s = "Vent 5";  break;
+        case HeatingMode::HEATING_MODE_VENT_6:   s = "Vent 6";  break;
+        case HeatingMode::HEATING_MODE_VENT_7:   s = "Vent 7";  break;
+        case HeatingMode::HEATING_MODE_VENT_8:   s = "Vent 8";  break;
+        case HeatingMode::HEATING_MODE_VENT_9:   s = "Vent 9";  break;
+        case HeatingMode::HEATING_MODE_HIGH:  // = VENT_10
+          s = fan_only ? "Vent 10" : "High";
+          break;
+        case HeatingMode::HEATING_MODE_BOOST:    s = "Boost";   break;
       }
       this->publish_state(s);
     });
