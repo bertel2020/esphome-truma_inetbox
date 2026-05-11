@@ -1,6 +1,7 @@
 #include "TrumaSensor.h"
 #include "esphome/core/log.h"
 #include "esphome/components/truma_inetbox/helpers.h"
+#include <cmath>
 
 namespace esphome {
 namespace truma_inetbox {
@@ -14,10 +15,16 @@ void TrumaSensor::setup() {
         this->publish_state(temp_code_to_decimal(h->current_temp_room)); break;
       case TRUMA_SENSOR_TYPE::CURRENT_WATER_TEMPERATURE:
         this->publish_state(temp_code_to_decimal(h->current_temp_water)); break;
-      case TRUMA_SENSOR_TYPE::TARGET_ROOM_TEMPERATURE:
-        this->publish_state(temp_code_to_decimal(h->target_temp_room)); break;
-      case TRUMA_SENSOR_TYPE::TARGET_WATER_TEMPERATURE:
-        this->publish_state(static_cast<float>(h->target_temp_water)); break;
+      case TRUMA_SENSOR_TYPE::TARGET_ROOM_TEMPERATURE: {
+        float temp = temp_code_to_decimal(h->target_temp_room);
+        this->publish_state(std::isnan(temp) ? 0.0f : temp);
+        break;
+      }
+      case TRUMA_SENSOR_TYPE::TARGET_WATER_TEMPERATURE: {
+        float temp = temp_code_to_decimal(h->target_temp_water);
+        this->publish_state(std::isnan(temp) ? 0.0f : temp);
+        break;
+      }
       case TRUMA_SENSOR_TYPE::HEATING_MODE:
         this->publish_state(static_cast<float>(h->heating_mode)); break;
       case TRUMA_SENSOR_TYPE::ELECTRIC_POWER_LEVEL:
