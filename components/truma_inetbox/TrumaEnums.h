@@ -89,7 +89,7 @@ enum class OperatingStatus : uint8_t {
   OPERATING_STATUS_UNSET              = 0x0,
   OPERATING_STATUS_OFF                = 0x0,
   OPERATING_STATUS_WARNING            = 0x1,
-  OPERATING_STATUS_START_OR_COOL_DOWN = 0x4,
+  OPERATING_STATUS_ON_STANDBY         = 0x4,
   OPERATING_STATUS_ON_5               = 0x5,
   OPERATING_STATUS_ON_6               = 0x6,
   OPERATING_STATUS_ON_7               = 0x7,
@@ -105,8 +105,8 @@ enum class CpPlusDisplayStatus : uint8_t {
   CP_PLUS_DISPLAY_STANDBY_AC_ON  = 0x20,
   CP_PLUS_DISPLAY_BOILER_OFF     = 0x40,
   CP_PLUS_DISPLAY_BOILER_ON      = 0x50,
-  CP_PLUS_DISPLAY_HEATING_ON     = 0xF0,
-  CP_PLUS_DISPLAY_ERROR          = 0xD0,
+  CP_PLUS_DISPLAY_HEATING_ON     = 0xD0,
+  CP_PLUS_DISPLAY_ERROR          = 0xF0,
   CP_PLUS_DISPLAY_FATAL_ERROR    = 0x70,
 };
 
