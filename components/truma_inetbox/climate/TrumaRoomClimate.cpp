@@ -6,14 +6,8 @@ namespace truma_inetbox {
 
 static const char *const TAG = "truma_inetbox.room_climate";
 
-static const char *const FAN_OFF  = "Off";
-static const char *const FAN_ECO  = "Eco";
-static const char *const FAN_HIGH = "High";
-
 void TrumaRoomClimate::setup() {
-  // Register custom fan modes on the entity (new API for ESPHome >= 2025)
-  this->set_supported_custom_fan_modes({FAN_OFF, FAN_ECO, FAN_HIGH});
-
+  this->fan_mode = climate::CLIMATE_FAN_OFF;
   this->mode = climate::CLIMATE_MODE_OFF;
   this->publish_state();
 
@@ -23,15 +17,14 @@ void TrumaRoomClimate::setup() {
 
     bool fan_only = (status_heater->target_temp_room == TargetTemp::TARGET_TEMP_OFF);
 
-    auto call = this->make_call();
     switch (status_heater->heating_mode) {
       case HeatingMode::HEATING_MODE_ECO:
         if (!fan_only) {
           this->mode = climate::CLIMATE_MODE_HEAT;
-          call.set_fan_mode(FAN_ECO);
+          this->fan_mode = climate::CLIMATE_FAN_LOW;
         } else {
           this->mode = climate::CLIMATE_MODE_FAN_ONLY;
-          call.set_fan_mode(FAN_OFF);
+          this->fan_mode = climate::CLIMATE_FAN_OFF;
         }
         break;
       case HeatingMode::HEATING_MODE_VARIO_HEAT_NIGHT:
@@ -43,23 +36,23 @@ void TrumaRoomClimate::setup() {
       case HeatingMode::HEATING_MODE_VENT_8:
       case HeatingMode::HEATING_MODE_VENT_9:
         this->mode = climate::CLIMATE_MODE_FAN_ONLY;
-        call.set_fan_mode(FAN_OFF);
+        this->fan_mode = climate::CLIMATE_FAN_OFF;
         break;
       case HeatingMode::HEATING_MODE_HIGH:
         if (!fan_only) {
           this->mode = climate::CLIMATE_MODE_HEAT;
-          call.set_fan_mode(FAN_HIGH);
+          this->fan_mode = climate::CLIMATE_FAN_HIGH;
         } else {
           this->mode = climate::CLIMATE_MODE_FAN_ONLY;
-          call.set_fan_mode(FAN_OFF);
+          this->fan_mode = climate::CLIMATE_FAN_OFF;
         }
         break;
       default:
         this->mode = climate::CLIMATE_MODE_OFF;
-        call.set_fan_mode(FAN_OFF);
+        this->fan_mode = climate::CLIMATE_FAN_OFF;
         break;
     }
-    call.perform();
+
     this->publish_state();
   });
 }
@@ -68,7 +61,7 @@ void TrumaRoomClimate::dump_config() { LOG_CLIMATE(TAG, "Truma Room Climate", th
 
 void TrumaRoomClimate::control(const climate::ClimateCall &call) {
   // Temperature only
-  if (call.get_target_temperature().has_value() && call.get_custom_fan_mode().empty()) {
+  if (call.get_target_temperature().has_value() && !call.get_fan_mode().has_value()) {
     float temp = *call.get_target_temperature();
     this->parent_->get_heater()->action_heater_room(static_cast<uint8_t>(temp));
     return;
@@ -94,9 +87,9 @@ void TrumaRoomClimate::control(const climate::ClimateCall &call) {
     return;
   }
 
-  // Custom fan mode change
-  if (!call.get_custom_fan_mode().empty()) {
-    const std::string fan(call.get_custom_fan_mode());
+  // Fan mode change
+  if (call.get_fan_mode().has_value()) {
+    auto fan_mode = *call.get_fan_mode();
     auto status_heater = this->parent_->get_heater()->get_status();
     float temp = temp_code_to_decimal(status_heater->target_temp_room, 0);
     if (call.get_target_temperature().has_value()) {
@@ -104,12 +97,16 @@ void TrumaRoomClimate::control(const climate::ClimateCall &call) {
     }
     if (temp < 5) temp = 5;
 
-    if (fan == FAN_ECO) {
-      this->parent_->get_heater()->action_heater_room(static_cast<uint8_t>(temp), HeatingMode::HEATING_MODE_ECO);
-    } else if (fan == FAN_HIGH) {
-      this->parent_->get_heater()->action_heater_room(static_cast<uint8_t>(temp), HeatingMode::HEATING_MODE_HIGH);
-    } else {
-      this->parent_->get_heater()->action_heater_room(0);
+    switch (fan_mode) {
+      case climate::CLIMATE_FAN_LOW:
+        this->parent_->get_heater()->action_heater_room(static_cast<uint8_t>(temp), HeatingMode::HEATING_MODE_ECO);
+        break;
+      case climate::CLIMATE_FAN_HIGH:
+        this->parent_->get_heater()->action_heater_room(static_cast<uint8_t>(temp), HeatingMode::HEATING_MODE_HIGH);
+        break;
+      default:
+        this->parent_->get_heater()->action_heater_room(0);
+        break;
     }
   }
 }
@@ -121,6 +118,12 @@ climate::ClimateTraits TrumaRoomClimate::traits() {
   for (auto mode : this->supported_modes_) {
     traits.add_supported_mode(mode);
   }
+
+  traits.set_supported_fan_modes({{
+      climate::CLIMATE_FAN_OFF,
+      climate::CLIMATE_FAN_LOW,
+      climate::CLIMATE_FAN_HIGH,
+  }});
 
   traits.set_visual_min_temperature(5);
   traits.set_visual_max_temperature(30);
