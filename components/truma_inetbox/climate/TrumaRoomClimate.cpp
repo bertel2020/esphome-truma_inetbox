@@ -11,24 +11,20 @@ static const char *const FAN_ECO  = "Eco";
 static const char *const FAN_HIGH = "High";
 
 void TrumaRoomClimate::setup() {
-  // Initialize with Off state
-  auto call = this->make_call();
-  call.set_mode(climate::CLIMATE_MODE_OFF);
-  call.set_fan_mode(FAN_OFF);
-  call.perform();
+  this->mode = climate::CLIMATE_MODE_OFF;
   this->publish_state();
 
   this->parent_->get_heater()->add_on_message_callback([this](const StatusFrameHeater *status_heater) {
     this->target_temperature = temp_code_to_decimal(status_heater->target_temp_room);
     this->current_temperature = temp_code_to_decimal(status_heater->current_temp_room);
 
+    bool fan_only = (status_heater->target_temp_room == TargetTemp::TARGET_TEMP_OFF);
+
     switch (status_heater->heating_mode) {
-      case HeatingMode::HEATING_MODE_ECO:   // = VENT_1 = 0x01
-        if (status_heater->target_temp_room != TargetTemp::TARGET_TEMP_OFF) {
+      case HeatingMode::HEATING_MODE_ECO:
+        if (!fan_only) {
           this->mode = climate::CLIMATE_MODE_HEAT;
-          auto c = this->make_call();
-          c.set_fan_mode(FAN_ECO);
-          c.perform();
+          this->custom_fan_mode = FAN_ECO;
         } else {
           this->mode = climate::CLIMATE_MODE_FAN_ONLY;
         }
@@ -43,21 +39,17 @@ void TrumaRoomClimate::setup() {
       case HeatingMode::HEATING_MODE_VENT_9:
         this->mode = climate::CLIMATE_MODE_FAN_ONLY;
         break;
-      case HeatingMode::HEATING_MODE_HIGH:  // = VENT_10 = 0x0A
-        if (status_heater->target_temp_room != TargetTemp::TARGET_TEMP_OFF) {
+      case HeatingMode::HEATING_MODE_HIGH:
+        if (!fan_only) {
           this->mode = climate::CLIMATE_MODE_HEAT;
-          auto c = this->make_call();
-          c.set_fan_mode(FAN_HIGH);
-          c.perform();
+          this->custom_fan_mode = FAN_HIGH;
         } else {
           this->mode = climate::CLIMATE_MODE_FAN_ONLY;
         }
         break;
       default:
         this->mode = climate::CLIMATE_MODE_OFF;
-        auto c = this->make_call();
-        c.set_fan_mode(FAN_OFF);
-        c.perform();
+        this->custom_fan_mode = FAN_OFF;
         break;
     }
 
@@ -68,11 +60,14 @@ void TrumaRoomClimate::setup() {
 void TrumaRoomClimate::dump_config() { LOG_CLIMATE(TAG, "Truma Room Climate", this); }
 
 void TrumaRoomClimate::control(const climate::ClimateCall &call) {
-  if (call.get_target_temperature().has_value() && !call.has_custom_fan_mode()) {
+  // Temperature only (no fan mode change)
+  if (call.get_target_temperature().has_value() && call.get_custom_fan_mode().empty()) {
     float temp = *call.get_target_temperature();
     this->parent_->get_heater()->action_heater_room(static_cast<uint8_t>(temp));
+    return;
   }
 
+  // Mode change
   if (call.get_mode().has_value()) {
     climate::ClimateMode mode = *call.get_mode();
     auto status_heater = this->parent_->get_heater()->get_status();
@@ -89,18 +84,19 @@ void TrumaRoomClimate::control(const climate::ClimateCall &call) {
         this->parent_->get_heater()->action_heater_room(0);
         break;
     }
+    return;
   }
 
-  if (call.has_custom_fan_mode()) {
-    const std::string fan = std::string(call.get_custom_fan_mode());
+  // Custom fan mode change (Eco/High)
+  if (!call.get_custom_fan_mode().empty()) {
+    const std::string fan(call.get_custom_fan_mode());
     auto status_heater = this->parent_->get_heater()->get_status();
     float temp = temp_code_to_decimal(status_heater->target_temp_room, 0);
     if (call.get_target_temperature().has_value()) {
       temp = *call.get_target_temperature();
     }
-    if (fan == FAN_ECO || fan == FAN_HIGH) {
-      if (temp < 5) temp = 5;
-    }
+    if (temp < 5) temp = 5;
+
     if (fan == FAN_ECO) {
       this->parent_->get_heater()->action_heater_room(static_cast<uint8_t>(temp), HeatingMode::HEATING_MODE_ECO);
     } else if (fan == FAN_HIGH) {
