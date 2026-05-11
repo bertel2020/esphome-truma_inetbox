@@ -52,8 +52,8 @@ CONF_SUPPORTED_TYPE = {
         CONF_CLASS: truma_inetbox_ns.class_("TrumaHeaterSelect", select.Select, cg.Component),
         CONF_TYPE: TRUMA_SELECT_TYPE_dummy_ns.HEATER_FAN_ONLY_SPEED,
         CONF_ICON: "mdi:fan",
-        CONF_OPTIONS: ("AUS", "Stufe 1", "Stufe 2", "Stufe 3", "Stufe 4", "Stufe 5",
-                       "Stufe 6", "Stufe 7", "Stufe 8", "Stufe 9", "Stufe 10"),
+        CONF_OPTIONS: ("Off", "Speed 1", "Speed 2", "Speed 3", "Speed 4", "Speed 5",
+                       "Speed 6", "Speed 7", "Speed 8", "Speed 9", "Speed 10"),
     },
 }
 
