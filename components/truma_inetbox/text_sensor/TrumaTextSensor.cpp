@@ -74,14 +74,14 @@ void TrumaTextSensor::setup() {
     this->parent_->get_heater()->add_on_message_callback([this](const StatusFrameHeater *h) {
       const char *s = "Unknown";
       switch (h->operating_status) {
-        case OperatingStatus::OPERATING_STATUS_OFF:                s = "Off";               break;
-        case OperatingStatus::OPERATING_STATUS_WARNING:            s = "Warning";           break;
-        case OperatingStatus::OPERATING_STATUS_START_OR_COOL_DOWN: s = "Start / Cool Down"; break;
-        case OperatingStatus::OPERATING_STATUS_ON_5:               s = "On";                break;
-        case OperatingStatus::OPERATING_STATUS_ON_6:               s = "On";                break;
-        case OperatingStatus::OPERATING_STATUS_ON_7:               s = "On";                break;
-        case OperatingStatus::OPERATING_STATUS_ON_8:               s = "On";                break;
-        case OperatingStatus::OPERATING_STATUS_ON_9:               s = "On";                break;
+        case OperatingStatus::OPERATING_STATUS_OFF:                s = "Off";        break;
+        case OperatingStatus::OPERATING_STATUS_WARNING:            s = "Warning";    break;
+        case OperatingStatus::OPERATING_STATUS_ON_STANDBY:        s = "Standby";    break;
+        case OperatingStatus::OPERATING_STATUS_ON_5:               s = "On";         break;
+        case OperatingStatus::OPERATING_STATUS_ON_6:               s = "On";         break;
+        case OperatingStatus::OPERATING_STATUS_ON_7:               s = "On";         break;
+        case OperatingStatus::OPERATING_STATUS_ON_8:               s = "On";         break;
+        case OperatingStatus::OPERATING_STATUS_ON_9:               s = "On";         break;
       }
       this->publish_state(s);
     });
