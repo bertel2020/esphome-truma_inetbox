@@ -93,11 +93,16 @@ void TrumaiNetBoxApp::lin_reset_device() {
 }
 
 void TrumaiNetBoxApp::lin_message_recieved_(const uint8_t pid, const uint8_t *message, uint8_t length) {
-  // PID 0x22: CP Plus sendet Display Status + Heating Status
-  // Quelle: danielfett/inetbox.py parse_status_2
+  // PID 0x22: CP Plus Display Status + Heating Status
   if (pid == LIN_PID_CP_PLUS_STATUS_2) {
     this->display_.set_display_status(message, length);
     return;
+  }
+  // PID 0x20: vent_mode in databytes[5] >> 4 (mc0110: vent_mode_mapping)
+  if (pid == 0x20 && length >= 6) {
+    uint8_t vent_mode = message[5] >> 4;
+    this->display_.set_vent_mode(vent_mode);
+    ESP_LOGD(TAG, "PID20: vent_mode=%d", vent_mode);
   }
   LinBusProtocol::lin_message_recieved_(pid, message, length);
 }
