@@ -30,11 +30,11 @@ void TrumaTextSensor::setup() {
         case TRUMA_TEXT_SENSOR_TYPE::CP_PLUS_DISPLAY_STATUS: {
           const char *s = "Unknown";
           switch (d->cp_plus_display) {
-            case 0x00: s = "Standby - AC Off";  break;
+            case 0x00: s = "Off - AC Off";      break;
             case 0x01: s = "Warning";           break;
-            case 0x20: s = "Standby - AC On";   break;
+            case 0x20: s = "Off - AC On";       break;
             case 0x40: s = "Boiler Off";        break;
-            case 0x50: s = "Boiler On";         break;
+            case 0x50: s = "Standby";           break;
             case 0xD0: s = "Heating On";        break;
             case 0xF0: s = "Error";             break;
             case 0x70: s = "Fatal Error";       break;
