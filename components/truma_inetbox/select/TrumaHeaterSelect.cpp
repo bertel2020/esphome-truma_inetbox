@@ -147,7 +147,7 @@ void TrumaHeaterSelect::control(const std::string &value) {
           this->parent_->get_heater()->action_heater_room(static_cast<uint8_t>(temp), HeatingMode::HEATING_MODE_BOOST);
           break;
         default:
-          this->parent_->get_heater()->action_heater_room(0, HeatingMode::HEATING_MODE_OFF);
+          this->parent_->get_heater()->action_heater_fan_only(HeatingMode::HEATING_MODE_OFF);
           break;
       }
       break;
@@ -181,37 +181,38 @@ void TrumaHeaterSelect::control(const std::string &value) {
     case TRUMA_SELECT_TYPE::HEATER_FAN_ONLY_SPEED:
       switch ((TRUMA_SELECT_TYPE_HEATER_FAN_ONLY_SPEED) index.value()) {
         case TRUMA_SELECT_TYPE_HEATER_FAN_ONLY_SPEED::VENT_1:
-          this->parent_->get_heater()->action_heater_room(0, HeatingMode::HEATING_MODE_VENT_1);
+          this->parent_->get_heater()->action_heater_fan_only(HeatingMode::HEATING_MODE_VENT_1);
           break;
         case TRUMA_SELECT_TYPE_HEATER_FAN_ONLY_SPEED::VENT_2:
-          this->parent_->get_heater()->action_heater_room(0, HeatingMode::HEATING_MODE_VENT_2);
+          this->parent_->get_heater()->action_heater_fan_only(HeatingMode::HEATING_MODE_VENT_2);
           break;
         case TRUMA_SELECT_TYPE_HEATER_FAN_ONLY_SPEED::VENT_3:
-          this->parent_->get_heater()->action_heater_room(0, HeatingMode::HEATING_MODE_VENT_3);
+          this->parent_->get_heater()->action_heater_fan_only(HeatingMode::HEATING_MODE_VENT_3);
           break;
         case TRUMA_SELECT_TYPE_HEATER_FAN_ONLY_SPEED::VENT_4:
-          this->parent_->get_heater()->action_heater_room(0, HeatingMode::HEATING_MODE_VENT_4);
+          this->parent_->get_heater()->action_heater_fan_only(HeatingMode::HEATING_MODE_VENT_4);
           break;
         case TRUMA_SELECT_TYPE_HEATER_FAN_ONLY_SPEED::VENT_5:
-          this->parent_->get_heater()->action_heater_room(0, HeatingMode::HEATING_MODE_VENT_5);
+          this->parent_->get_heater()->action_heater_fan_only(HeatingMode::HEATING_MODE_VENT_5);
           break;
         case TRUMA_SELECT_TYPE_HEATER_FAN_ONLY_SPEED::VENT_6:
-          this->parent_->get_heater()->action_heater_room(0, HeatingMode::HEATING_MODE_VENT_6);
+          this->parent_->get_heater()->action_heater_fan_only(HeatingMode::HEATING_MODE_VENT_6);
           break;
         case TRUMA_SELECT_TYPE_HEATER_FAN_ONLY_SPEED::VENT_7:
-          this->parent_->get_heater()->action_heater_room(0, HeatingMode::HEATING_MODE_VENT_7);
+          this->parent_->get_heater()->action_heater_fan_only(HeatingMode::HEATING_MODE_VENT_7);
           break;
         case TRUMA_SELECT_TYPE_HEATER_FAN_ONLY_SPEED::VENT_8:
-          this->parent_->get_heater()->action_heater_room(0, HeatingMode::HEATING_MODE_VENT_8);
+          this->parent_->get_heater()->action_heater_fan_only(HeatingMode::HEATING_MODE_VENT_8);
           break;
         case TRUMA_SELECT_TYPE_HEATER_FAN_ONLY_SPEED::VENT_9:
-          this->parent_->get_heater()->action_heater_room(0, HeatingMode::HEATING_MODE_VENT_9);
+          this->parent_->get_heater()->action_heater_fan_only(HeatingMode::HEATING_MODE_VENT_9);
           break;
         case TRUMA_SELECT_TYPE_HEATER_FAN_ONLY_SPEED::VENT_10:
-          this->parent_->get_heater()->action_heater_room(0, HeatingMode::HEATING_MODE_VENT_10);
+          this->parent_->get_heater()->action_heater_fan_only(HeatingMode::HEATING_MODE_VENT_10);
           break;
         default:
-          this->parent_->get_heater()->action_heater_room(0, HeatingMode::HEATING_MODE_OFF);
+          // AUS: turn off completely
+          this->parent_->get_heater()->action_heater_room(0);
           break;
       }
       break;
