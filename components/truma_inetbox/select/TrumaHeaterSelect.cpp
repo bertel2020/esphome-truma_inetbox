@@ -178,7 +178,13 @@ void TrumaHeaterSelect::control(const std::string &value) {
       }
       break;
 
-    case TRUMA_SELECT_TYPE::HEATER_FAN_ONLY_SPEED:
+    case TRUMA_SELECT_TYPE::HEATER_FAN_ONLY_SPEED: {
+      // Only act when target_temp is OFF (fan only mode active)
+      auto status_heater = this->parent_->get_heater()->get_status();
+      if (status_heater->target_temp_room != TargetTemp::TARGET_TEMP_OFF) {
+        ESP_LOGW(TAG, "Fan Only Speed ignored - heater is active");
+        return;
+      }
       switch ((TRUMA_SELECT_TYPE_HEATER_FAN_ONLY_SPEED) index.value()) {
         case TRUMA_SELECT_TYPE_HEATER_FAN_ONLY_SPEED::VENT_1:
           this->parent_->get_heater()->action_heater_fan_only(HeatingMode::HEATING_MODE_VENT_1);
@@ -216,6 +222,7 @@ void TrumaHeaterSelect::control(const std::string &value) {
           break;
       }
       break;
+    }
 
     default:
       break;
