@@ -70,7 +70,12 @@ void TrumaSensor::setup() {
     }
   });
 
-  // CP_PLUS_DISPLAY_STATUS und HEATING_STATUS aus PID 0x22
+  // VENT_MODE aus PID 0x20
+  if (this->type_ == TRUMA_SENSOR_TYPE::VENT_MODE) {
+    this->parent_->get_display()->add_on_vent_mode_callback([this](uint8_t vent_mode) {
+      this->publish_state(static_cast<float>(vent_mode));
+    });
+  }
   // Quelle: danielfett/inetbox.py parse_status_2
   this->parent_->get_display()->add_on_message_callback([this](const StatusFrameDisplay *d) {
     switch (this->type_) {
