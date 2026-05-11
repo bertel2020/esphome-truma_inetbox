@@ -45,9 +45,9 @@ void TrumaTextSensor::setup() {
         case TRUMA_TEXT_SENSOR_TYPE::HEATING_STATUS: {
           const char *s = "Unknown";
           switch (d->heating_status) {
-            case 0x10: s = "Boiler ECO Done";    break;
+            case 0x10: s = "Boiler Done";    break;
             case 0x11: s = "Boiler ECO Heating"; break;
-            case 0x30: s = "Boiler HOT Done";    break;
+            case 0x30: s = "Boiler Done";    break;
             case 0x31: s = "Boiler HOT Heating"; break;
           }
           this->publish_state(s);
